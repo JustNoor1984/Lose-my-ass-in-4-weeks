@@ -138,7 +138,9 @@ nav{display:none!important}
 <div class="card"><div class="authTabs"><button type="button" id="loginTab" class="active">Inloggen</button><button type="button" id="signupTab">Account maken</button></div>
 <div id="nameField" style="display:none"><label>Naam<input id="authName"></label></div>
 <label>E-mailadres<input id="authEmail" type="email"></label><label>Wachtwoord<input id="authPassword" type="password" minlength="8"></label>
-<button type="button" class="btn" id="authSubmit">Inloggen</button><p id="authMessage" class="small muted"></p></div></div></div>
+<button type="button" class="btn" id="authSubmit">Inloggen</button>
+<p id="authMessage" class="small muted"></p>
+<div id="authDebug" style="margin-top:10px;padding:10px;border-radius:10px;background:#fff3cd;border:1px solid #e0b84f;color:#4b3b00;font-size:.85rem;display:none;white-space:pre-wrap"></div></div></div></div>
 
 <div id="appShell"><header>
       <div class="between">
@@ -330,6 +332,13 @@ const DEFAULTS=[["bf_oats_apple", "lu_eggs", "sn_quark_fruit", "di_pasta_chicken
 const SLOT_NAMES={breakfast:"Ontbijt",lunch:"Lunch",snack:"Tussendoor",dinner:"Avondeten"};
 let user=null,profile={},plan={},state={},sports=[],measurements=[],ownRecipes=[],mealChoices=[],foodLog=[],communityRecipes=[],signedImageCache={},recipeTab="mine",weekView=1,training="tai",authMode="login";
 const $=x=>document.getElementById(x), esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+function authDebug(text){
+ const el=$("authDebug");
+ if(!el)return;
+ el.style.display="block";
+ el.textContent=text;
+ console.log("[AUTH DEBUG]",text);
+}
 
 function setAuth(mode){
  authMode=mode;
@@ -342,8 +351,10 @@ function setAuth(mode){
 async function submitAuth(){
  const btn=$("authSubmit"), msg=$("authMessage");
  const email=$("authEmail").value.trim(), password=$("authPassword").value, name=$("authName").value.trim();
+ authDebug("Stap 1/5: de inlogknop werkt.");
  if(!email || !password){
    msg.textContent="Vul je e-mailadres en wachtwoord in.";
+   authDebug("Gestopt: e-mailadres of wachtwoord ontbreekt.");
    return;
  }
  btn.disabled=true;
@@ -352,18 +363,39 @@ async function submitAuth(){
  msg.textContent="";
  try{
    if(authMode==="login"){
-     const {data,error}=await sb.auth.signInWithPassword({email,password});
+     authDebug("Stap 2/5: verbinding maken met Supabase…");
+     let result;
+     try{
+       result=await Promise.race([
+         sb.auth.signInWithPassword({email,password}),
+         new Promise((_,reject)=>setTimeout(()=>reject(new Error("TIMEOUT: Supabase antwoordde niet binnen 12 seconden.")),12000))
+       ]);
+     }catch(e){
+       authDebug("FOUT bij stap 2: "+(e?.message||String(e)));
+       msg.textContent="Loginfout: "+(e?.message||"onbekende fout");
+       return;
+     }
+
+     authDebug("Stap 3/5: Supabase heeft geantwoord.");
+     const {data,error}=result||{};
      if(error){
-       console.error("Login error",error);
-       msg.textContent=error.message || "Inloggen lukte niet.";
+       authDebug("FOUT van Supabase: "+(error.message||JSON.stringify(error)));
+       msg.textContent=error.message||"Supabase weigerde de login.";
        return;
      }
      if(!data?.session){
-       msg.textContent="Inloggen lukte niet: er is geen sessie aangemaakt.";
+       authDebug("FOUT: antwoord ontvangen, maar zonder geldige sessie.");
+       msg.textContent="Geen geldige sessie ontvangen.";
        return;
      }
-     msg.textContent="Ingelogd. App wordt geopend…";
-     await showSession(data.session);
+
+     authDebug("Stap 4/5: geldige sessie ontvangen voor "+(data.user?.email||email)+".");
+     user=data.user||data.session.user;
+     $("authGate").style.display="none";
+     $("appShell").style.display="block";
+     authDebug("Stap 5/5: app wordt geopend.");
+     // Data in de achtergrond laden zodat dit nooit de login blokkeert.
+     setTimeout(()=>load().catch(e=>console.error("Load after login",e)),0);
      return;
    }else{
      if(!name){msg.textContent="Vul je naam in.";return;}
@@ -375,7 +407,8 @@ async function submitAuth(){
    }
  }catch(e){
    console.error("Auth error",e);
-   msg.textContent="Inloggen gaf een fout: " + (e?.message || "onbekende fout");
+   authDebug("ONVERWACHTE FOUT: "+(e?.message||String(e)));
+   msg.textContent="Inloggen gaf een fout: "+(e?.message||"onbekende fout");
  }finally{
    btn.disabled=false;
    btn.textContent=oldText;
@@ -1115,7 +1148,10 @@ async function showSession(session){
   toast("Ingelogd, maar niet alle gegevens konden worden geladen.");
  });
 }
-sb.auth.onAuthStateChange((_e,s)=>showSession(s).catch(e=>console.error("Session render error",e)));
+sb.auth.onAuthStateChange((event,s)=>{
+ console.log("Auth event",event,!!s);
+ if(event==="SIGNED_OUT") showSession(null).catch(()=>{});
+});
 sb.auth.getSession()
  .then(r=>showSession(r.data.session))
  .catch(e=>{
