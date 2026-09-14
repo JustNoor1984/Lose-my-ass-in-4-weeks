@@ -1,19 +1,20 @@
-MIJN 4-WEKEN APP — V6 VISUAL REBUILD
+MIJN 4-WEKEN APP — V7
 
-Nieuw:
-- Interface opnieuw opgebouwd in de gekozen witte/groene/donkerblauwe dashboardstijl.
-- Lokale gerechtfoto's en foto-achtige Tai Chi-stappen.
-- 'Ik heb iets anders gegeten': naam, hoeveelheid en kcal toevoegen.
-- Dagbudget wordt direct opnieuw berekend.
-- 3 mix-&-match suggesties die binnen het resterende kcal-budget passen.
-- Afwijkende maaltijd optioneel opslaan als eigen maaltijd.
-- Weekmenu, recepten, delen, profiel, sport, voortgang en boodschappen blijven aanwezig.
-- Boodschappen hebben visuele thumbnails. De app noemt geen verzonnen actuele Lidl-prijs/voorraad.
+Aangepast:
+- Alleen nog één navigatiebalk: bovenaan, en deze werkt.
+- Gerecht-specifieke beelden voor ontbijt, wraps, smoothie, zalm, wok/rijst, pasta, chili/bonen, kwark en noten.
+- Sportinstructies met vrouwelijke illustraties/beelden in plaats van lijnfiguren.
+- Sportbibliotheek toegevoegd: wandelen, hardlopen, krachttraining, yoga, Pilates, fietsen, zwemmen, dansen en vrij invoeren.
+- Apple Watch/Apple Health-sectie toegevoegd als duidelijke toekomstige native functie.
 
-INSTALLATIE:
-1. Voer V6_DATABASE_MIGRATION.sql één keer uit in Supabase SQL Editor.
-2. Upload naar GitHub: index.html, manifest.webmanifest, sw.js, icon.svg, README.txt én de map assets.
-3. Wacht op GitHub Pages deployment en ververs de app.
+BELANGRIJK:
+De huidige GitHub Pages/PWA kan Apple Health/HealthKit niet rechtstreeks uitlezen.
+Daarvoor moet de app als native iOS-app worden gebouwd met de HealthKit-capability en gebruikerspermissies.
 
-LET OP:
-Calorieën zijn schattingen. Bij eigen maaltijden gebruik je bij voorkeur de kcal van verpakking/recept.
+Upload naar GitHub:
+index.html
+manifest.webmanifest
+sw.js
+icon.svg
+README.txt
+en de volledige map assets/
