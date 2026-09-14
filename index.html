@@ -135,10 +135,10 @@ nav{display:none!important}
 
 <div id="authGate"><div class="wrap">
 <div class="card hero"><span class="badge">Privé familie-app</span><h1>4 weken sterker & fitter</h1><p>Iedereen heeft een eigen account. Persoonlijke gegevens blijven gescheiden.</p></div>
-<div class="card"><div class="authTabs"><button id="loginTab" class="active">Inloggen</button><button id="signupTab">Account maken</button></div>
+<div class="card"><div class="authTabs"><button type="button" id="loginTab" class="active">Inloggen</button><button type="button" id="signupTab">Account maken</button></div>
 <div id="nameField" style="display:none"><label>Naam<input id="authName"></label></div>
 <label>E-mailadres<input id="authEmail" type="email"></label><label>Wachtwoord<input id="authPassword" type="password" minlength="8"></label>
-<button class="btn" id="authSubmit">Inloggen</button><p id="authMessage" class="small muted"></p></div></div></div>
+<button type="button" class="btn" id="authSubmit">Inloggen</button><p id="authMessage" class="small muted"></p></div></div></div>
 
 <div id="appShell"><header>
       <div class="between">
@@ -330,6 +330,51 @@ const DEFAULTS=[["bf_oats_apple", "lu_eggs", "sn_quark_fruit", "di_pasta_chicken
 const SLOT_NAMES={breakfast:"Ontbijt",lunch:"Lunch",snack:"Tussendoor",dinner:"Avondeten"};
 let user=null,profile={},plan={},state={},sports=[],measurements=[],ownRecipes=[],mealChoices=[],foodLog=[],communityRecipes=[],signedImageCache={},recipeTab="mine",weekView=1,training="tai",authMode="login";
 const $=x=>document.getElementById(x), esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+
+function setAuth(mode){
+ authMode=mode;
+ $("loginTab").classList.toggle("active",mode==="login");
+ $("signupTab").classList.toggle("active",mode==="signup");
+ $("nameField").style.display=mode==="signup"?"block":"none";
+ $("authSubmit").textContent=mode==="login"?"Inloggen":"Account maken";
+ $("authMessage").textContent="";
+}
+async function submitAuth(){
+ const btn=$("authSubmit"), msg=$("authMessage");
+ const email=$("authEmail").value.trim(), password=$("authPassword").value, name=$("authName").value.trim();
+ if(!email || !password){
+   msg.textContent="Vul je e-mailadres en wachtwoord in.";
+   return;
+ }
+ btn.disabled=true;
+ const oldText=btn.textContent;
+ btn.textContent=authMode==="login"?"Bezig met inloggen…":"Account maken…";
+ msg.textContent="";
+ try{
+   if(authMode==="login"){
+     const {data,error}=await sb.auth.signInWithPassword({email,password});
+     if(error){msg.textContent=error.message;return;}
+     if(!data?.session)msg.textContent="Inloggen lukte niet. Probeer het opnieuw.";
+   }else{
+     if(!name){msg.textContent="Vul je naam in.";return;}
+     const {error}=await sb.auth.signUp({
+       email,password,
+       options:{data:{display_name:name},emailRedirectTo:location.origin+location.pathname}
+     });
+     msg.textContent=error?error.message:"Account gemaakt. Controleer je e-mail om te bevestigen.";
+   }
+ }catch(e){
+   console.error("Auth error",e);
+   msg.textContent="Er ging iets mis bij het inloggen. Vernieuw de pagina en probeer opnieuw.";
+ }finally{
+   btn.disabled=false;
+   btn.textContent=oldText;
+ }
+}
+$("loginTab").addEventListener("click",()=>setAuth("login"));
+$("signupTab").addEventListener("click",()=>setAuth("signup"));
+$("authSubmit").addEventListener("click",submitAuth);
+$("authPassword").addEventListener("keydown",e=>{if(e.key==="Enter")submitAuth()});
 function toast(t="Opgeslagen"){$("toast").textContent=t;$("toast").classList.add("show");setTimeout(()=>$("toast").classList.remove("show"),1700)}
 function closeModal(id){$ (id).classList.remove("open")} function openModal(id){$ (id).classList.add("open")}
 function iso(d=new Date()){return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10)} function addDays(s,n){let d=new Date(s+"T12:00:00");d.setDate(d.getDate()+n);return iso(d)} function diff(a,b){return Math.floor((new Date(b+"T12:00:00")-new Date(a+"T12:00:00"))/86400000)}
@@ -1003,9 +1048,15 @@ if($("clearRecipeFilters"))$("clearRecipeFilters").onclick=()=>{
 $("uploadRecipePhoto").onclick=uploadRecipePhoto;
 $("confirmScheduleRecipe").onclick=confirmScheduleRecipe;$("ateDifferent").onclick=()=>openModal("differentModal");$("quickDifferent").onclick=()=>openModal("differentModal");$("saveDifferent").onclick=saveDifferentMeal;$("logout").onclick=()=>sb.auth.signOut();
 
-function setAuth(mode){authMode=mode;$("loginTab").classList.toggle("active",mode==="login");$("signupTab").classList.toggle("active",mode==="signup");$("nameField").style.display=mode==="signup"?"block":"none";$("authSubmit").textContent=mode==="login"?"Inloggen":"Account maken"}
-$("loginTab").onclick=()=>setAuth("login");$("signupTab").onclick=()=>setAuth("signup");$("authSubmit").onclick=async()=>{let email=$("authEmail").value.trim(),password=$("authPassword").value,name=$("authName").value.trim();if(authMode==="login"){let r=await sb.auth.signInWithPassword({email,password});$("authMessage").textContent=r.error?r.error.message:""}else{if(!name)return $("authMessage").textContent="Vul je naam in.";let r=await sb.auth.signUp({email,password,options:{data:{display_name:name},emailRedirectTo:location.origin+location.pathname}});$("authMessage").textContent=r.error?r.error.message:"Account gemaakt. Controleer je e-mail om te bevestigen."}};
 async function showSession(session){if(!session){$("authGate").style.display="block";$("appShell").style.display="none";user=null;return}user=session.user;$("authGate").style.display="none";$("appShell").style.display="block";await load()}
-sb.auth.onAuthStateChange((_e,s)=>showSession(s));sb.auth.getSession().then(r=>showSession(r.data.session));
+sb.auth.onAuthStateChange((_e,s)=>showSession(s).catch(e=>console.error("Session render error",e)));
+sb.auth.getSession()
+ .then(r=>showSession(r.data.session))
+ .catch(e=>{
+   console.error("Session startup error",e);
+   $("authGate").style.display="block";
+   $("appShell").style.display="none";
+   $("authMessage").textContent="De app kon je sessie niet laden. Je kunt hieronder opnieuw inloggen.";
+ });
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script></body></html>
