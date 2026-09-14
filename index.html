@@ -59,6 +59,28 @@ main{max-width:1440px;padding:12px 16px}
 .topnav{display:flex;gap:18px;align-items:center;justify-content:center;font-size:.78rem}.topnav span{padding:7px 10px;border-radius:8px}.topnav .on{background:#dcf7ea;color:#008e5b}
 @media(max-width:1050px){.v6-dashboard{grid-template-columns:1fr 1fr}.v6-wide{grid-column:span 2}}
 @media(max-width:650px){header{padding:9px 12px}.topnav{display:none}.v6-dashboard{display:block}.v6-wide,.v6-full{grid-column:auto}.mixgrid{grid-template-columns:1fr}.exercise-strip{grid-template-columns:1fr 1fr}.recipe-hero{height:190px}.mealgrid{grid-template-columns:1fr}main{padding:8px}.card{margin:8px 0}}
+
+/* V7.1 fixes */
+body{padding-bottom:20px!important}
+nav{display:none!important}
+.topnav{display:flex!important;gap:8px;align-items:center;overflow-x:auto}
+.topnav button{border:0;background:transparent;color:var(--navy);border-radius:9px;padding:7px 10px;min-width:72px;font-size:.78rem}
+.topnav button span{display:block;margin-top:2px}
+.topnav button.active{background:#dcf7ea;color:#008e5b;font-weight:800}
+.sport-library{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.sport-card{border:1px solid #dce8ef;background:#fff;border-radius:12px;padding:10px;text-align:left}
+.sport-card:hover{border-color:#00a86b}
+.exercise-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.exercise-step img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:10px;background:#eef6f2}
+.exercise-step b{display:block;margin-top:5px}
+@media(max-width:900px){
+ .topnav{order:3;width:100%;justify-content:flex-start}
+ .topnav button{min-width:78px}
+}
+@media(max-width:650px){
+ .exercise-strip{grid-template-columns:1fr 1fr}
+ .sport-library{grid-template-columns:1fr 1fr}
+}
 </style></head><body>
 
 <div id="authGate"><div class="wrap">
@@ -68,7 +90,24 @@ main{max-width:1440px;padding:12px 16px}
 <label>E-mailadres<input id="authEmail" type="email"></label><label>Wachtwoord<input id="authPassword" type="password" minlength="8"></label>
 <button class="btn" id="authSubmit">Inloggen</button><p id="authMessage" class="small muted"></p></div></div></div>
 
-<div id="appShell"><header><div class="between"><div class="flex"><span style="font-size:1.8rem">🌿</span><div><h1>Mijn 4-weken App</h1><div class="tiny muted">Gezonder. Sterker. Jij.</div></div></div><div class="topnav"><span>⌂ Home</span><span class="on">🍴 Voeding</span><span>🏋 Sport</span><span>▣ Planning</span><span>🛒 Boodschappen</span><span>♧ Community</span></div><button class="btn secondary sm" id="profileShortcut">👤 Hallo <span id="accountName">Ik</span></button></div></header>
+<div id="appShell"><header>
+      <div class="between">
+        <div class="flex">
+          <span style="font-size:1.8rem">🌿</span>
+          <div><h1>Mijn 4-weken App</h1><div class="tiny muted">Gezonder. Sterker. Jij.</div></div>
+        </div>
+        <div class="topnav" id="topNav">
+          <button data-view="today" class="active">⌂<span>Home</span></button>
+          <button data-view="week">🍴<span>Voeding</span></button>
+          <button data-view="sport">🏋<span>Sport</span></button>
+          <button data-view="week">▣<span>Planning</span></button>
+          <button data-view="shopping">🛒<span>Boodschappen</span></button>
+          <button data-view="recipes">♧<span>Community</span></button>
+          <button data-view="settings">👤<span>Profiel</span></button>
+        </div>
+        <button class="btn secondary sm" id="profileShortcut">👤 Hallo <span id="accountName">Ik</span></button>
+      </div>
+    </header>
 <main>
 <section id="today" class="view active">
 <div class="v6-dashboard">
@@ -109,7 +148,7 @@ main{max-width:1440px;padding:12px 16px}
 <label>Startdatum<input id="startDate" type="date"></label><label>Doelgewicht (optioneel)<input id="goalWeight" type="number" step="0.1"></label><button class="btn" id="saveProfile">Opslaan</button></div>
 <div class="card"><p id="accountEmail" class="small muted"></p><button class="btn secondary" id="logout">Uitloggen</button></div></section>
 </main>
-<nav><button data-view="today" class="active"><span>☀️</span>Vandaag</button><button data-view="week"><span>🗓️</span>Week</button><button data-view="sport"><span>🏋️</span>Sport</button><button data-view="recipes"><span>🍲</span>Recepten</button><button data-view="shopping"><span>🛒</span>Lijst</button><button data-view="progress"><span>📈</span>Groei</button><button data-view="settings"><span>👤</span>Profiel</button></nav></div>
+</div>
 
 <div class="modal" id="recipeModal"><div class="modalbox"><div class="modalhead between"><h2 id="modalTitle">Recept</h2><button class="btn secondary sm" onclick="closeModal('recipeModal')">Sluiten</button></div><div id="modalBody"></div></div></div>
 <div class="modal" id="chooseModal"><div class="modalbox"><div class="modalhead between"><h2 id="chooseTitle">Kies maaltijd</h2><button class="btn secondary sm" onclick="closeModal('chooseModal')">Sluiten</button></div><div id="chooseBody"></div></div></div>
@@ -170,13 +209,24 @@ async function saveProfile(){
  profile=r.data;let pr=await sb.from("user_plans").upsert({user_id:user.id,start_date:$("startDate").value||null,goal_weight_kg:+$("goalWeight").value||null},{onConflict:"user_id"}).select().single();if(pr.error)return toast("Plan opslaan lukte niet");plan=pr.data;renderAll();toast("Profiel bijgewerkt")
 }
 
-function mealImage(r){
+function mealImage(r,slot=""){
  const n=(r?.name||"").toLowerCase();
- if(n.includes("pannenkoek"))return "assets/meal-pancakes.jpg";
- if(n.includes("wrap"))return "assets/meal-wrap.jpg";
- if(n.includes("zalm"))return "assets/meal-salmon.jpg";
- if(n.includes("smooth"))return "assets/meal-smoothie.jpg";
- return "assets/meal-oats.jpg";
+ if(n.includes("havermout")||n.includes("appel")||n.includes("peer")) return "assets/dish-oats.jpg";
+ if(n.includes("pannenkoek")) return "assets/meal-pancakes.jpg";
+ if(n.includes("wrap")) return "assets/dish-wraps.jpg";
+ if(n.includes("smooth")) return "assets/dish-smoothie.jpg";
+ if(n.includes("zalm")) return "assets/dish-salmon.jpg";
+ if(n.includes("rijst")||n.includes("wok")) return "assets/dish-stirfry.jpg";
+ if(n.includes("pasta")) return "assets/dish-pasta.jpg";
+ if(n.includes("chili")||n.includes("bonen")) return "assets/dish-soup.jpg";
+ if(n.includes("kwark")) return "assets/dish-quark.jpg";
+ if(n.includes("pinda")||n.includes("noten")) return "assets/dish-nuts.jpg";
+ if(n.includes("aardappel")||n.includes("kip")) return "assets/dish-stirfry.jpg";
+ if(n.includes("ei")||n.includes("brood")) return "assets/dish-wraps.jpg";
+ if(slot==="lunch") return "assets/dish-wraps.jpg";
+ if(slot==="snack") return "assets/dish-smoothie.jpg";
+ if(slot==="dinner") return "assets/dish-salmon.jpg";
+ return "assets/dish-oats.jpg";
 }
 function actualCalories(date=iso()){return foodLog.filter(x=>x.eaten_on===date).reduce((s,x)=>s+(+x.calories||0),0)}
 function plannedConsumedCalories(date=iso()){
@@ -192,8 +242,8 @@ function renderToday(){
  $("todayMeals").innerHTML="";
  for(const slot of ["breakfast","lunch","snack","dinner"]){
    let r=selectedRecipe(iso(),slot),d=document.createElement("div");d.className="meal";
-   d.innerHTML=`<img class="meal-thumb" src="${mealImage(r)}"><div class="meal-copy"><b>${SLOT_NAMES[slot]}</b><br>${esc(r?.name||"Kies een maaltijd")}<div class="kcal">${r?.kcal?`± ${r.kcal} kcal`:""}</div></div>`;
-   d.onclick=()=>{if(r){showRecipe(r);$("featuredMealImg").src=mealImage(r);$("featuredRecipe").innerHTML=`<h3>${esc(r.name)}</h3><b style="color:#00985f">±${r.kcal||"?"} kcal</b>`+recipeDetails(r)}};
+   d.innerHTML=`<img class="meal-thumb" src="${mealImage(r,slot)}"><div class="meal-copy"><b>${SLOT_NAMES[slot]}</b><br>${esc(r?.name||"Kies een maaltijd")}<div class="kcal">${r?.kcal?`± ${r.kcal} kcal`:""}</div></div>`;
+   d.onclick=()=>{if(r){showRecipe(r);$("featuredMealImg").src=mealImage(r,slot);$("featuredRecipe").innerHTML=`<h3>${esc(r.name)}</h3><b style="color:#00985f">±${r.kcal||"?"} kcal</b>`+recipeDetails(r)}};
    $("todayMeals").appendChild(d)
  }
  const planned=dayTotal(iso()), eaten=consumedToday(), remaining=t?Math.max(0,t-eaten):0, pct=t?Math.min(100,Math.round(eaten/t*100)):0;
@@ -258,11 +308,59 @@ function pose(type){
  return `<svg viewBox="0 0 100 80" aria-hidden="true">${body}</svg>`;
 }
 const GUIDES={
-tai:[["1. Houding","Sta rechtop, knieën zacht, schouders laag. Kijk ontspannen vooruit.","walk"],["2. Langzame stap","Rol rustig van hiel naar voorvoet. Houd de pas kort en gecontroleerd.","walk"],["3. Gewicht verplaatsen","Verplaats je gewicht volledig naar het voorste been vóór de volgende stap.","lunge"],["4. Armen meenemen","Laat de armen zacht tegengesteld meebewegen; geen kracht zetten.","walk"],["5. Adem & focus","Adem rustig door en richt aandacht op voetplaatsing en balans.","walk"]],
-A:[["Stoel-squat","Heupen naar achter richting stoel, borst trots, knieën volgen tenen. 8–12 herhalingen.","squat"],["Incline push-up","Handen tegen muur/tafel, lichaam lang, borst gecontroleerd naar steun. 8–12.","push"],["Glute bridge","Rug op de vloer, voeten dichtbij, knijp billen en hef heupen. 10–15.","bridge"],["Reverse lunge","Stap één been terug, zak rustig, duw via voorste voet terug. 8–10 per been.","lunge"],["Dead bug","Onderrug licht tegen vloer, beweeg tegengestelde arm/been langzaam. 20–30 sec.","floor"]],
-B:[["Sit-to-stand","Kom vanuit stoel zonder te zwaaien omhoog en ga langzaam terug. 10–15.","squat"],["Incline push-up","Handen op stevige verhoging, romp recht. 8–12.","push"],["Hip hinge","Duw heupen naar achter met neutrale rug en kom krachtig terug.","squat"],["Bird dog","Op handen/knieën: strek tegengestelde arm en been. 8–12 per kant.","floor"],["Calf raise","Kom langzaam op de voorvoeten en zak gecontroleerd. 10–15.","walk"],["Wall sit","Rug tegen muur, zak tot comfortabele hoek en houd 20–30 sec.","squat"]]
+ tai:[
+  ["Houding","Sta rechtop met zachte knieën en ontspannen schouders.","assets/exercise-walk-1.jpg"],
+  ["Langzaam stappen","Rol rustig van hiel naar voorvoet met korte passen.","assets/exercise-walk-2.jpg"],
+  ["Armen bewegen","Laat je armen zacht tegengesteld meebewegen.","assets/exercise-walk-3.jpg"],
+  ["Ademhaling","Adem rustig in en uit en houd focus op balans.","assets/exercise-walk-4.jpg"]
+ ],
+ A:[
+  ["Stoel-squat","Heupen naar achter, borst trots. 8–12 herhalingen.","assets/exercise-walk-1.jpg"],
+  ["Incline push-up","Handen tegen tafel of muur, romp lang. 8–12.","assets/exercise-walk-2.jpg"],
+  ["Glute bridge","Span billen aan en hef heupen. 10–15.","assets/exercise-walk-3.jpg"],
+  ["Reverse lunge","Stap achteruit en zak gecontroleerd. 8–10 per been.","assets/exercise-walk-4.jpg"]
+ ],
+ B:[
+  ["Sit-to-stand","Kom beheerst uit een stoel omhoog. 10–15.","assets/exercise-walk-1.jpg"],
+  ["Hip hinge","Duw heupen naar achter met neutrale rug.","assets/exercise-walk-2.jpg"],
+  ["Bird dog","Strek tegengestelde arm en been. 8–12 per kant.","assets/exercise-walk-3.jpg"],
+  ["Wall sit","Rug tegen muur, houd 20–30 seconden.","assets/exercise-walk-4.jpg"]
+ ]
 };
-function renderGuide(){$("trainingGuide").innerHTML='<div class="card">'+GUIDES[training].map(x=>`<div class="exercise">${pose(x[2])}<div><b>${x[0]}</b><div class="small">${x[1]}</div></div></div>`).join("")+"</div>";document.querySelectorAll("#trainingTabs button").forEach(b=>b.classList.toggle("active",b.dataset.training===training))}
+function renderGuide(){
+ document.querySelectorAll("#trainingTabs button").forEach(b=>b.classList.toggle("active",b.dataset.training===training));
+ const guide=GUIDES[training]||GUIDES.tai;
+ $("trainingGuide").innerHTML=`
+ <div class="card">
+   <div class="exercise-strip">
+     ${guide.map((x,i)=>`<div class="exercise-step"><img src="${x[2]}" alt="${esc(x[0])}"><b>${i+1}. ${esc(x[0])}</b><small>${esc(x[1])}</small></div>`).join("")}
+   </div>
+ </div>
+ <div class="card">
+   <h3>Andere sporten</h3>
+   <div class="sport-library">
+     ${[
+       ["Wandelen","Rust & dagelijkse beweging","🚶‍♀️"],
+       ["Hardlopen","Conditie en uithoudingsvermogen","🏃‍♀️"],
+       ["Krachttraining","Sterker en krachtiger","🏋️‍♀️"],
+       ["Yoga","Mobiliteit en ontspanning","🧘‍♀️"],
+       ["Pilates","Core en stabiliteit","🤸‍♀️"],
+       ["Fietsen","Conditie buiten of binnen","🚴‍♀️"],
+       ["Zwemmen","Conditie met lage impact","🏊‍♀️"],
+       ["Dansen","Bewegen met plezier","💃"]
+     ].map(x=>`<button class="sport-card" onclick="prefillSport('${x[0]}')"><div style="font-size:2rem">${x[2]}</div><b>${x[0]}</b><div class="small muted">${x[1]}</div></button>`).join("")}
+     <button class="sport-card" onclick="prefillSport('')"><div style="font-size:2rem">＋</div><b>Andere sport</b><div class="small muted">Zelf invoeren</div></button>
+   </div>
+ </div>
+ <div class="card apple-card">
+   <div class="between"><div><h3> Apple Watch & Apple Health</h3><div class="small muted">Stappen en workouts automatisch synchroniseren.</div></div><span class="native-pill">iOS-app nodig</span></div>
+   <p class="small">Deze webapp kan HealthKit niet rechtstreeks uitlezen. De interface is voorbereid voor een latere native iPhone-versie.</p>
+ </div>`;
+}
+function prefillSport(name){
+ $("sportName").value=name;
+ $("sportName").focus();
+} 
 async function addSport(){let activity=$("sportName").value.trim(),date=$("sportDate").value;if(!activity||!date)return toast("Vul activiteit en datum in");let res=await sb.from("sports").insert({user_id:user.id,activity,activity_date:date,start_time:$("sportTime").value||null,duration_minutes:+$("sportDuration").value||null,notes:$("sportNotes").value||null}).select().single();if(res.error)return toast("Opslaan lukte niet");sports.push(res.data);renderSports();renderToday();toast()}
 function renderSports(){$("sportDate").value||=iso();$("sportList").innerHTML=sports.length?sports.map(s=>`<div class="sportrow"><b>${esc(s.activity)}</b><div class="small muted">${nl(s.activity_date)} ${s.start_time?"• "+s.start_time.slice(0,5):""} ${s.duration_minutes?"• "+s.duration_minutes+" min":""}</div></div>`).join(""):`<span class="small muted">Nog niets gepland.</span>`}
 function renderProgress(){let vals=measurements.filter(m=>m.weight_kg!=null),first=vals[0]?.weight_kg,last=vals.at(-1)?.weight_kg,change=first!=null&&last!=null?+last-+first:null;$("kpis").innerHTML=`<div class="kpi"><span class="small muted">Laatste</span><b>${last?+last+" kg":"—"}</b></div><div class="kpi"><span class="small muted">Verschil</span><b>${change!=null?(change>0?"+":"")+change.toFixed(1)+" kg":"—"}</b></div><div class="kpi"><span class="small muted">Metingen</span><b>${measurements.length}</b></div>`;$("measurements").innerHTML=[...measurements].reverse().map(m=>`<div class="sportrow"><b>${nl(m.measured_on)}</b> ${m.weight_kg?esc(m.weight_kg)+" kg":""} ${m.waist_cm?"• "+esc(m.waist_cm)+" cm":""}</div>`).join("");drawChart()}
@@ -282,8 +380,8 @@ async function saveDifferentMeal(){
  ["differentName","differentQty","differentKcal"].forEach(id=>$(id).value="");$("alsoSaveMeal").checked=false;closeModal("differentModal");renderAll();toast("Dag opnieuw berekend")
 }
 function renderAll(){renderEstimate();renderToday();renderWeek();renderGuide();renderSports();renderRecipes();renderShopping();renderProgress()}
-function setView(v){document.querySelectorAll(".view").forEach(x=>x.classList.toggle("active",x.id===v));document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("active",x.dataset.view===v));window.scrollTo({top:0,behavior:"smooth"})}
-document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>setView(b.dataset.view));$("profileShortcut").onclick=()=>setView("settings");
+function setView(v){document.querySelectorAll(".view").forEach(x=>x.classList.toggle("active",x.id===v));document.querySelectorAll("#topNav button").forEach(x=>x.classList.toggle("active",x.dataset.view===v));window.scrollTo({top:0,behavior:"smooth"})}
+document.querySelectorAll("#topNav button").forEach(b=>b.onclick=()=>setView(b.dataset.view));$("profileShortcut").onclick=()=>setView("settings");
 document.querySelectorAll("#trainingTabs button").forEach(b=>b.onclick=()=>{training=b.dataset.training;renderGuide()});
 $("shoppingWeek").onchange=renderShopping;$("saveProfile").onclick=saveProfile;$("addRecipe").onclick=addRecipe;$("importRecipe").onclick=importRecipe;$("addSport").onclick=addSport;$("addMeasurement").onclick=addMeasurement;$("ateDifferent").onclick=()=>openModal("differentModal");$("quickDifferent").onclick=()=>openModal("differentModal");$("saveDifferent").onclick=saveDifferentMeal;$("logout").onclick=()=>sb.auth.signOut();
 
