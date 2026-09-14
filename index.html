@@ -1453,10 +1453,22 @@ function unitToBase(qty,unit,food){
  return null;
 }
 function parseNaturalIngredient(line){
- const raw=line.trim();
- const m=raw.match(/^(\d+(?:[.,]\d+)?)\s*(kg|g|gr|gram|ml|cl|dl|l|tl|theelepels?|el|eetlepels?|stuks?|stuk|st|eieren?|snee(?:tje)?|wrap)\s+(.+)$/i);
- if(!m)return {error:`"${raw}" — begin met hoeveelheid + eenheid, bv. 30 ml sojasaus`};
- const qty=parseFloat(m[1].replace(",", ".")), unit=m[2], name=m[3].trim();
+ let raw=line.trim();
+
+ // Ondersteun zowel "800 g komkommer" als "Komkommer: 800 g".
+ let m=raw.match(/^(\d+(?:[.,]\d+)?)\s*(kg|g|gr|gram|ml|cl|dl|l|tl|theelepels?|el|eetlepels?|stuks?|stuk|st|eieren?|snee(?:tje)?|wrap)\s+(.+)$/i);
+ let qty,unit,name;
+ if(m){
+   qty=parseFloat(m[1].replace(",", "."));
+   unit=m[2];
+   name=m[3].trim();
+ }else{
+   m=raw.match(/^(.+?)\s*:\s*(\d+(?:[.,]\d+)?)\s*(kg|g|gr|gram|ml|cl|dl|l|tl|theelepels?|el|eetlepels?|stuks?|stuk|st|eieren?|snee(?:tje)?|wrap)$/i);
+   if(!m)return {error:`"${raw}" — gebruik bijvoorbeeld 30 ml sojasaus of Sojasaus: 30 ml`};
+   name=m[1].trim();
+   qty=parseFloat(m[2].replace(",", "."));
+   unit=m[3];
+ }
  const food=findFood(name);
  if(!food)return {error:`"${name}" staat nog niet in de calorie-database`};
  const base=unitToBase(qty,unit,food);
@@ -1500,15 +1512,12 @@ function updateRecipeCalcPreview(){
    box.innerHTML=`<span class="muted">Vul ingrediënten in om de calorieën te berekenen.</span>`;
    return;
  }
- const lines=raw.split("\n").map(x=>x.trim()).filter(Boolean);
- const parsed=[], errors=[];
- for(const line of lines){
-   try{parsed.push(parseIngredientLine(line))}
-   catch(e){errors.push(e.message||line)}
- }
- const total=parsed.reduce((s,x)=>s+(+x.kcal||0),0);
+
+ const result=parseIngredientsDetailed(raw);
+ const total=result.items.reduce((s,x)=>s+(+x.kcal||0),0);
+
  box.innerHTML=`<b>Berekend uit ingrediënten:</b> ± ${Math.round(total)} kcal totaal • ± ${Math.round(total/servings)} kcal per portie`
-   +(errors.length?`<br><span class="over"><b>Nog niet herkend:</b><br>${errors.map(esc).join("<br>")}</span>`:"");
+   +(result.errors.length?`<br><span class="over"><b>Nog niet herkend:</b><br>${result.errors.map(esc).join("<br>")}</span>`:"");
 }
 async function addRecipe(){
  try{
