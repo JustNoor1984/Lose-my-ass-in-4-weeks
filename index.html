@@ -128,6 +128,9 @@ nav{display:none!important}
  .home-meal-kcal{text-align:left}
  .home-meal-detail{grid-column:auto}
 }
+
+/* V7.6 recipe filters */
+#recipeFilterCount{font-weight:700}
 </style></head><body>
 
 <div id="authGate"><div class="wrap">
@@ -158,7 +161,7 @@ nav{display:none!important}
 <main>
 <section id="today" class="view active">
 <div class="v6-dashboard">
- <div class="card"><h2 class="v6-card-title"><span class="stepno">1.</span>Kies je maaltijden</h2><p class="small muted">Kies van boven naar beneden. Na elke keuze laat de volgende lijst alleen maaltijden zien die nog binnen je calorie-doel passen.</p><div class="between"><span class="badge" id="planBadge">Startdatum</span><span class="badge" id="calorieBadge">Caloriedoel</span></div><div id="todayMeals" class="mealgrid" style="grid-template-columns:1fr;margin-top:8px"></div><button class="btn secondary" id="ateDifferent" style="width:100%;margin-top:8px">＋ Ik heb iets anders gegeten</button><div id="todayTotal" class="day-total"></div></div>
+ <div class="card"><h2 class="v6-card-title"><span class="stepno">1.</span>Kies je maaltijden</h2><p class="small muted">Kies in elke volgorde die jij wilt. Na iedere keuze worden alle andere lijsten opnieuw gefilterd op je resterende calorie-budget.</p><div class="between"><span class="badge" id="planBadge">Startdatum</span><span class="badge" id="calorieBadge">Caloriedoel</span></div><div id="todayMeals" class="mealgrid" style="grid-template-columns:1fr;margin-top:8px"></div><button class="btn secondary" id="ateDifferent" style="width:100%;margin-top:8px">＋ Ik heb iets anders gegeten</button><div id="todayTotal" class="day-total"></div></div>
  <div class="card"><h2 class="v6-card-title"><span class="stepno">2.</span>Recept details</h2><img id="featuredMealImg" class="recipe-hero" src="assets/meal-oats.jpg"><div id="featuredRecipe"><h3>Havermout met appel</h3><b style="color:#00985f">±390 kcal</b><p class="small muted">Tik links op een maaltijd voor ingrediënten, grammages en bereiding.</p></div></div>
  <div class="card"><h2 class="v6-card-title"><span class="stepno">3.</span>Jouw caloriebehoefte</h2><p class="small muted">Automatisch op basis van jouw profiel.</p><div id="todayCalorieSummary" class="ok"></div><button class="btn" onclick="setView('settings')" style="width:100%;margin-top:10px">Bekijk mijn gegevens</button></div>
  <div class="card"><h2 class="v6-card-title"><span class="stepno">4.</span>Recept delen</h2><img class="recipe-hero" src="assets/meal-pancakes.jpg"><h3>Deel met familie</h3><p class="small muted">Alleen recept, ingrediënten en bereiding worden gedeeld. Geen persoonlijke gegevens.</p><button class="btn" onclick="setView('recipes')" style="width:100%">Naar mijn recepten</button></div>
@@ -203,7 +206,46 @@ nav{display:none!important}
       <div class="flex"><input id="importCode" placeholder="Deelcode" style="flex:1"><button class="btn secondary" id="importRecipe">Importeren</button></div>
       <p class="small muted">Je importeert alleen het recept. Geen andere gegevens van de maker.</p>
     </div>
-    <div id="recipeList"></div>
+    
+<div class="card" style="margin-top:12px">
+  <h3>Filter recepten</h3>
+  <div class="grid2">
+    <label>Maaltijdsoort
+      <select id="recipeFilterType">
+        <option value="all">Alle maaltijdsoorten</option>
+        <option value="breakfast">Ontbijt</option>
+        <option value="lunch">Lunch</option>
+        <option value="snack">Tussendoor</option>
+        <option value="dinner">Avondeten</option>
+      </select>
+    </label>
+    <label>Maximale kcal
+      <select id="recipeFilterKcal">
+        <option value="0">Geen maximum</option>
+        <option value="150">Tot 150 kcal</option>
+        <option value="250">Tot 250 kcal</option>
+        <option value="350">Tot 350 kcal</option>
+        <option value="450">Tot 450 kcal</option>
+        <option value="550">Tot 550 kcal</option>
+      </select>
+    </label>
+  </div>
+  <label>Zoeken op naam of ingrediënt
+    <input id="recipeFilterSearch" placeholder="bijv. kip, linzen, havermout…">
+  </label>
+  <label>Soort recept
+    <select id="recipeFilterOrigin">
+      <option value="all">Alle recepten</option>
+      <option value="standard">Standaard recepten</option>
+      <option value="mine">Mijn eigen recepten</option>
+      <option value="source">Met externe bron</option>
+    </select>
+  </label>
+  <button class="btn secondary sm" id="clearRecipeFilters">Filters wissen</button>
+</div>
+<div id="recipeFilterCount" class="small muted" style="margin:8px 2px"></div>
+<div id="recipeList"></div>
+
   </div>
 
   <div id="communityRecipesPane" style="display:none">
@@ -377,57 +419,41 @@ function homeChosenRecipe(date,slot){
 function homeChosenTotal(date=iso()){
  return ["breakfast","lunch","snack","dinner"].reduce((sum,slot)=>sum+(homeChosenRecipe(date,slot)?.kcal||0),0);
 }
-function minRecipeKcal(slot){
- const vals=allRecipes().filter(r=>r.slot===slot&&r.kcal>0).map(r=>+r.kcal);
- return vals.length?Math.min(...vals):0;
-}
-function futureMinimumAfter(slot){
- const slots=["breakfast","lunch","snack","dinner"], idx=slots.indexOf(slot);
- return slots.slice(idx+1).reduce((sum,s)=>sum+minRecipeKcal(s),0);
-}
-function priorSlotsChosen(date,slot){
- const slots=["breakfast","lunch","snack","dinner"], idx=slots.indexOf(slot);
- return slots.slice(0,idx).every(s=>!!homeChosenRecipe(date,s));
-}
-function priorChosenCalories(date,slot){
- const slots=["breakfast","lunch","snack","dinner"], idx=slots.indexOf(slot);
- return slots.slice(0,idx).reduce((sum,s)=>sum+(homeChosenRecipe(date,s)?.kcal||0),0);
+function caloriesFromOtherSlots(date,slot){
+ return ["breakfast","lunch","snack","dinner"]
+   .filter(s=>s!==slot)
+   .reduce((sum,s)=>sum+(homeChosenRecipe(date,s)?.kcal||0),0);
 }
 function homeAllowedRecipes(date,slot){
- const target=targetCalories(), prior=priorChosenCalories(date,slot), futureMin=futureMinimumAfter(slot);
+ const target=targetCalories();
+ const otherTotal=caloriesFromOtherSlots(date,slot);
  return allRecipes()
    .filter(r=>r.slot===slot&&r.kcal)
-   .filter(r=>!target || prior+(+r.kcal)+futureMin<=target)
+   .filter(r=>!target || otherTotal+(+r.kcal)<=target)
    .sort((a,b)=>(+a.kcal)-(+b.kcal));
 }
 async function saveHomeMeal(date,slot,recipeId){
- const slots=["breakfast","lunch","snack","dinner"], idx=slots.indexOf(slot);
  if(!recipeId){
-   const resetSlots=slots.slice(idx);
-   const del=await sb.from("meal_choices").delete().eq("user_id",user.id).eq("meal_date",date).in("meal_type",resetSlots);
+   const del=await sb.from("meal_choices").delete().eq("user_id",user.id).eq("meal_date",date).eq("meal_type",slot);
    if(del.error)return toast("Keuze resetten lukte niet");
-   mealChoices=mealChoices.filter(x=>!(x.meal_date===date && resetSlots.includes(x.meal_type)));
+   mealChoices=mealChoices.filter(x=>!(x.meal_date===date && x.meal_type===slot));
    renderToday();renderWeek();renderShopping();
-   toast(`${SLOT_NAMES[slot]} gereset — opties opnieuw berekend`);
+   toast(`${SLOT_NAMES[slot]} gereset — alle opties opnieuw berekend`);
    return;
  }
  const r=getRecipe(recipeId); if(!r)return toast("Maaltijd niet gevonden");
+ const otherTotal=caloriesFromOtherSlots(date,slot), target=targetCalories();
+ if(target && otherTotal+(+r.kcal)>target){
+   renderToday();
+   return toast("Deze keuze past niet meer binnen je resterende calorie-budget");
+ }
  const payload={user_id:user.id,meal_date:date,meal_type:slot,meal_name:r.id,recipe_id:r.custom?r.dbid:null};
  const res=await sb.from("meal_choices").upsert(payload,{onConflict:"user_id,meal_date,meal_type"}).select().single();
  if(res.error)return toast("Keuze opslaan lukte niet");
-
- // Changing an earlier meal resets later choices, so the next dropdown is recalculated cleanly.
- const later=slots.slice(idx+1);
- if(later.length){
-   const del=await sb.from("meal_choices").delete().eq("user_id",user.id).eq("meal_date",date).in("meal_type",later);
-   if(del.error) return toast("Maaltijd opgeslagen, maar latere keuzes konden niet worden vernieuwd");
- }
- mealChoices=mealChoices.filter(x=>!(x.meal_date===date && (x.meal_type===slot || later.includes(x.meal_type))));
+ mealChoices=mealChoices.filter(x=>!(x.meal_date===date && x.meal_type===slot));
  mealChoices.push(res.data);
-
- renderToday(); renderWeek(); renderShopping();
- const next=slots[idx+1];
- toast(next?`${SLOT_NAMES[slot]} gekozen. Kies nu ${SLOT_NAMES[next].toLowerCase()}.`:"Dagmenu compleet");
+ renderToday();renderWeek();renderShopping();
+ toast(`${SLOT_NAMES[slot]} gekozen — andere opties opnieuw berekend`);
 }
 function renderToday(){
  const t=targetCalories();$("calorieBadge").textContent=t?`Doel ± ${t} kcal`:"Profiel aanvullen";
@@ -438,24 +464,27 @@ function renderToday(){
  $("todayMeals").className="home-meal-builder";
  $("todayMeals").innerHTML="";
 
- slots.forEach((slot,idx)=>{
+ slots.forEach(slot=>{
    const selected=homeChosenRecipe(date,slot);
-   const enabled=idx===0 || priorSlotsChosen(date,slot);
-   const allowed=enabled?homeAllowedRecipes(date,slot):[];
-   const prior=priorChosenCalories(date,slot);
-   const remainingBefore=t?Math.max(0,t-prior):null;
+   const allowed=homeAllowedRecipes(date,slot);
+   const otherTotal=caloriesFromOtherSlots(date,slot);
+   const available=t?Math.max(0,t-otherTotal):null;
 
    const row=document.createElement("div"); row.className="home-meal-row";
+   let optionRecipes=[...allowed];
+   if(selected && !optionRecipes.some(r=>r.id===selected.id)) optionRecipes.push(selected);
+   optionRecipes.sort((a,b)=>(+a.kcal)-(+b.kcal));
+
    const options=[
-     `<option value="">${enabled?`Kies ${SLOT_NAMES[slot].toLowerCase()}…`:`Kies eerst ${SLOT_NAMES[slots[idx-1]].toLowerCase()}`}</option>`,
-     ...allowed.map(r=>`<option value="${esc(r.id)}" ${selected?.id===r.id?"selected":""}>${esc(r.name)} — ±${r.kcal} kcal</option>`)
+     `<option value="">Kies ${SLOT_NAMES[slot].toLowerCase()}…</option>`,
+     ...optionRecipes.map(r=>`<option value="${esc(r.id)}" ${selected?.id===r.id?"selected":""}>${esc(r.name)} — ±${r.kcal} kcal</option>`)
    ].join("");
 
    row.innerHTML=`
-     <div class="home-meal-label"><b>${SLOT_NAMES[slot]}</b><span>${remainingBefore!=null?`± ${remainingBefore} kcal beschikbaar vóór deze keuze`:""}</span></div>
-     <select class="home-meal-select" ${enabled?"":"disabled"}>${options}</select>
+     <div class="home-meal-label"><b>${SLOT_NAMES[slot]}</b><span>${available!=null?`Tot ± ${available} kcal beschikbaar voor deze keuze`:""}</span></div>
+     <select class="home-meal-select">${options}</select>
      <div class="home-meal-kcal">${selected?.kcal?`± ${selected.kcal} kcal`:"—"}</div>
-     <div class="home-meal-detail">${enabled&&allowed.length===0?"Geen combinatie beschikbaar binnen je huidige dagdoel. Kies een eerdere maaltijd met minder kcal.":selected?`Gekozen: ${esc(selected.name)} · tik op ‘Bekijk recept’ hieronder voor ingrediënten en bereiding.`:""}</div>
+     <div class="home-meal-detail">${allowed.length===0&&!selected?"Geen opties meer binnen je huidige dagdoel. Wis of wijzig één van de andere maaltijden.":selected?`Gekozen: ${esc(selected.name)}`:"Je mag deze maaltijd op elk moment kiezen; de andere lijsten passen zich automatisch aan."}</div>
    `;
    const select=row.querySelector("select");
    select.onchange=()=>saveHomeMeal(date,slot,select.value);
@@ -463,10 +492,10 @@ function renderToday(){
 
    if(selected){
      const detail=document.createElement("button");
-     detail.type="button";detail.className="btn secondary sm";
-     detail.textContent=`Bekijk recept: ${selected.name}`;
-     detail.style.marginTop="4px";
-     detail.onclick=()=>{showRecipe(selected);$("featuredMealImg").src=mealImage(selected,slot);$("featuredRecipe").innerHTML=`<h3>${esc(selected.name)}</h3><b style="color:#00985f">±${selected.kcal||"?"} kcal</b>`+recipeDetails(selected)};
+     detail.type="button"; detail.className="btn secondary sm";
+     detail.textContent=`Bekijk recept`;
+     detail.style.marginTop="5px";
+     detail.onclick=()=>showRecipe(selected);
      row.querySelector(".home-meal-detail").appendChild(document.createElement("br"));
      row.querySelector(".home-meal-detail").appendChild(detail);
    }
@@ -476,7 +505,7 @@ function renderToday(){
  $("todayTotal").innerHTML=`<div class="home-budget ${t&&chosen>t?"over":""}">
    <div class="between"><b>Gekozen dagmenu: ± ${chosen} kcal</b><span>${t?`Nog ± ${remaining} kcal`:""}</span></div>
    ${t?`<div class="home-budget-bar"><div class="home-budget-fill" style="width:${pct}%"></div></div>`:""}
-   <div class="small muted" style="margin-top:6px">${slots.every(s=>homeChosenRecipe(date,s))?"Je dagmenu is compleet.":"Maak de keuzes van boven naar beneden compleet."}</div>
+   <div class="small muted" style="margin-top:6px">Je kunt de maaltijden in iedere volgorde kiezen. Iedere wijziging herberekent alle andere opties.</div>
  </div>`;
 
  const eaten=consumedToday(), remainingActual=t?Math.max(0,t-eaten):0, actualPct=t?Math.min(100,Math.round(eaten/t*100)):0;
@@ -662,15 +691,42 @@ async function confirmScheduleRecipe(){
 }
 function parseIngredients(text){let items=[];for(const line of text.split("\n").map(x=>x.trim()).filter(Boolean)){let p=line.split("|").map(x=>x.trim());if(p.length<4)throw new Error("Gebruik per regel: hoeveelheid | eenheid | ingrediënt | kcal");let qty=parseFloat(p[0].replace(",",".")),kcal=parseFloat(p[3].replace(",","."));if(!qty||isNaN(kcal))throw new Error("Hoeveelheid of kcal is ongeldig");items.push({qty,unit:p[1],name:p[2],kcal,cat:"Eigen recept"})}return items}
 async function addRecipe(){try{let name=$("recipeName").value.trim(),servings=+$("recipeServings").value||1,ings=parseIngredients($("recipeIngredients").value),steps=$("recipeSteps").value.split("\n").map(x=>x.trim()).filter(Boolean);if(!name||!steps.length)throw new Error("Vul naam en bereiding in");let total=ings.reduce((s,x)=>s+x.kcal,0),res=await sb.from("recipes").insert({user_id:user.id,name,meal_type:$("recipeType").value,ingredients:ings,steps,servings,calories_total:total}).select().single();if(res.error)throw res.error;ownRecipes.push(res.data);["recipeName","recipeIngredients","recipeSteps"].forEach(id=>$(id).value="");renderRecipes();toast(`Opgeslagen • ± ${Math.round(total/servings)} kcal/portie`)}catch(e){toast(e.message||"Opslaan lukte niet")}}
+function recipeSearchText(r){
+ const ing=(r.ingredients||[]).map(x=>typeof x==="string"?x:(x.name||"")).join(" ");
+ return `${r.name||""} ${ing}`.toLowerCase();
+}
+function currentRecipeFilters(){
+ return {
+   type:$("recipeFilterType")?.value||"all",
+   kcal:+($("recipeFilterKcal")?.value||0),
+   search:($("recipeFilterSearch")?.value||"").trim().toLowerCase(),
+   origin:$("recipeFilterOrigin")?.value||"all"
+ };
+}
+function recipeMatchesFilters(r,origin,f){
+ if(f.type!=="all" && r.slot!==f.type)return false;
+ if(f.kcal && (+r.kcal||99999)>f.kcal)return false;
+ if(f.search && !recipeSearchText(r).includes(f.search))return false;
+ if(f.origin==="standard" && origin!=="builtin")return false;
+ if(f.origin==="mine" && origin!=="mine")return false;
+ if(f.origin==="source" && !r.source_url)return false;
+ return true;
+}
 async function renderRecipes(){
- const host=$("recipeList"); host.innerHTML="";
+ const host=$("recipeList"); if(!host)return; host.innerHTML="";
+ const f=currentRecipeFilters(), items=[];
+ Object.values(BUILTIN).forEach(r=>{if(recipeMatchesFilters(r,"builtin",f))items.push({r,origin:"builtin"})});
+ ownRecipes.forEach(db=>{const r=customToRecipe(db);if(recipeMatchesFilters(r,"mine",f))items.push({r,origin:"mine"})});
+ $("recipeFilterCount").textContent=`${items.length} recept${items.length===1?"":"en"} gevonden`;
+ if(!items.length){host.innerHTML='<div class="card muted">Geen recepten gevonden met deze filters.</div>';return}
  const grid=document.createElement("div");grid.className="recipe-grid";host.appendChild(grid);
- for(const r of Object.values(BUILTIN))grid.appendChild(await recipeTile(r,"builtin"));
- for(const db of ownRecipes){
-   const r=customToRecipe(db),el=await recipeTile(r,"mine");
-   const body=el.querySelector(".recipe-actions");
-   const share=document.createElement("button");share.className="btn sm";share.textContent="Deel";share.onclick=()=>shareRecipe(r.dbid);body.appendChild(share);
-   const del=document.createElement("button");del.className="btn danger sm";del.textContent="Wis";del.onclick=()=>deleteRecipe(r.dbid);body.appendChild(del);
+ for(const item of items){
+   const r=item.r, el=await recipeTile(r,item.origin);
+   if(item.origin==="mine"){
+     const body=el.querySelector(".recipe-actions");
+     const share=document.createElement("button");share.className="btn sm";share.textContent="Deel";share.onclick=()=>shareRecipe(r.dbid);body.appendChild(share);
+     const del=document.createElement("button");del.className="btn danger sm";del.textContent="Wis";del.onclick=()=>deleteRecipe(r.dbid);body.appendChild(del);
+   }
    grid.appendChild(el);
  }
 }
@@ -762,6 +818,13 @@ document.querySelectorAll("#topNav button").forEach(b=>b.onclick=()=>setView(b.d
 document.querySelectorAll("#trainingTabs button").forEach(b=>b.onclick=()=>{training=b.dataset.training;renderGuide()});
 $("shoppingWeek").onchange=renderShopping;$("saveProfile").onclick=saveProfile;$("addRecipe").onclick=addRecipe;$("importRecipe").onclick=importRecipe;$("addSport").onclick=addSport;$("addMeasurement").onclick=addMeasurement;
 document.querySelectorAll("#recipeTabs button").forEach(b=>b.onclick=()=>setRecipeTab(b.dataset.rtab));
+
+["recipeFilterType","recipeFilterKcal","recipeFilterOrigin"].forEach(id=>$(id)&&($(id).onchange=renderRecipes));
+if($("recipeFilterSearch"))$("recipeFilterSearch").oninput=renderRecipes;
+if($("clearRecipeFilters"))$("clearRecipeFilters").onclick=()=>{
+ $("recipeFilterType").value="all";$("recipeFilterKcal").value="0";$("recipeFilterOrigin").value="all";$("recipeFilterSearch").value="";renderRecipes();
+};
+
 $("uploadRecipePhoto").onclick=uploadRecipePhoto;
 $("confirmScheduleRecipe").onclick=confirmScheduleRecipe;$("ateDifferent").onclick=()=>openModal("differentModal");$("quickDifferent").onclick=()=>openModal("differentModal");$("saveDifferent").onclick=saveDifferentMeal;$("logout").onclick=()=>sb.auth.signOut();
 
