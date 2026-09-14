@@ -1,16 +1,19 @@
-MIJN 4-WEKEN APP — V7.1
+MIJN 4-WEKEN APP — V7.2
 
-Gerichte fixes:
-- Onderste navigatie volledig verwijderd.
-- Bovenste navigatie is nu de enige navigatie en is klikbaar.
-- Verschillende gerechtbeelden per recept én per maaltijdtype als nog niets gekozen is.
-- Sportpagina toont vrouwelijke illustraties/beelden voor de stappen.
-- Extra sporten: wandelen, hardlopen, krachttraining, yoga, Pilates, fietsen, zwemmen, dansen en eigen sport.
-- Apple Health-sectie voorbereid; echte sync vereist later een native iOS-app.
+Nieuw:
+- Community heet nu Recepten.
+- Recepten zijn klikbaar en tonen ingrediënten, hoeveelheden, kcal en stappen.
+- Eigen recepten kunnen een foto krijgen nadat je het gerecht hebt gemaakt.
+- Gedeelde recepten verschijnen in een apart tabblad zonder profielgegevens.
+- Vanuit elk recept kun je week, dag en maaltijdtype kiezen en het direct in het weekmenu zetten.
+- Een gedeeld recept wordt bij inplannen eerst als privé kopie geïmporteerd.
+- Sportuitleg gebruikt geen misleidende afbeeldingen meer; alle bewegingen hebben uitgebreide techniek, aandachtspunten en doelen.
 
-Upload naar GitHub:
-- index.html
-- sw.js
-- README.txt
-- de volledige assets-map
-De overige bestanden hoeven niet opnieuw als ze al goed staan.
+EERST:
+Voer V7_2_DATABASE_MIGRATION.sql uit in Supabase SQL Editor.
+
+DAARNA UPLOADEN NAAR GITHUB:
+index.html
+sw.js
+README.txt
+(assets hoeven niet opnieuw voor deze update)
