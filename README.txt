@@ -1,15 +1,16 @@
-MIJN 4-WEKEN APP – VERSIE 4
+MIJN 4-WEKEN APP – VERSIE 5
 
 Nieuw:
-- Supabase login per familielid
-- Persoonlijke gegevens zijn gescheiden via Row Level Security
-- Zelf startdatum kiezen; app berekent dag 1 t/m 28 en week 1 t/m 4
-- Zelf sportactiviteiten toevoegen met datum, tijd, duur en notitie
-- Gewicht/taille per account in de database
-- Eigen recepten per account
-- Persoonlijke boodschappen-vinkjes en receptporties
-- PWA voor iPhone-beginscherm
+- Persoonlijke calorie-inschatting voor volwassenen (18+) op basis van Mifflin–St Jeor
+- Klikbare maaltijden met exacte hoeveelheden en geschatte kcal per portie
+- Weekmenu: keuzes die het dagdoel overschrijden worden geblokkeerd
+- Eigen recepten met berekende kcal uit opgegeven ingrediënt-kcal
+- Recepten veilig delen via een deelcode; geen profielgegevens worden gedeeld
+- Gedeelde recepten worden als privé kopie geïmporteerd
+- Boodschappenlijst wordt opgebouwd uit de gekozen maaltijden van de geselecteerde week
+- Visuele stap-voor-stap uitleg voor Tai Chi Walk en Calisthenics A/B
+- Profielscherm met leeftijd, geslacht, lengte, gewicht, activiteit en startdatum
 
-BELANGRIJK VOOR E-MAILBEVESTIGING:
-Voeg de uiteindelijke GitHub Pages URL toe aan Supabase:
-Authentication > URL Configuration > Redirect URLs.
+EERST:
+Voer V5_DATABASE_MIGRATION.sql uit in Supabase SQL Editor.
+Daarna upload je index.html, manifest.webmanifest, sw.js, icon.svg en README.txt naar GitHub.
