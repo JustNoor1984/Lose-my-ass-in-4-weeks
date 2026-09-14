@@ -1091,6 +1091,26 @@ async function saveMeal(date,slot,r){const payload={user_id:user.id,meal_date:da
 
 
 
+
+async function ensureBuiltinShareCode(r){
+ const {data,error}=await sb.rpc("get_builtin_share_code",{
+   p_builtin_id:String(r.id),
+   p_name:r.name,
+   p_meal_type:r.slot,
+   p_calories:+r.kcal||null,
+   p_servings:+r.servings||1,
+   p_ingredients:r.ingredients||[],
+   p_steps:r.steps||[]
+ });
+ if(error)throw error;
+ r.share_code=data;
+ return data;
+}
+async function shareCodeForRecipe(r){
+ if(r.custom&&!r.community)return r.share_code||await ensureRecipeShareCode(r.dbid);
+ if(!r.custom&&!r.community)return r.share_code||await ensureBuiltinShareCode(r);
+ return r.share_code||null;
+}
 async function ensureAutoShareCodes(){
  const pending=ownRecipes.filter(r=>!r.share_code||!r.share_enabled);
  if(!pending.length)return;
@@ -1250,20 +1270,28 @@ async function openRecipeDetail(r,source="mine"){
      <ol>${(r.steps||[]).map(x=>`<li>${esc(x)}</li>`).join("")||"<li>Geen bereidingsstappen ingevoerd.</li>"}</ol>
    </div>
    ${r.source_url?`<div class="small muted" style="margin-top:14px">Inspiratie/bron: <a href="${r.source_url}" target="_blank" rel="noopener noreferrer">${esc(r.source_name||"Bekijk origineel")}</a></div>`:""}
-   ${r.custom&&!r.community&&r.share_code?`<div class="card info" style="margin-top:12px"><b>Deelcode: ${esc(r.share_code)}</b><br><span class="small">Deze code is automatisch aan dit recept gekoppeld.</span></div>`:""}
+   ${!r.community?`<div class="card info" style="margin-top:12px"><b>Deelcode: <span id="detailShareCode">${r.share_code?esc(r.share_code):"wordt geladen…"}</span></b><br><span class="small">Deze code kun je direct met iemand delen.</span></div>`:""}
    <div class="recipe-actions">
      <button type="button" class="btn" id="detailPlanRecipe">＋ Toevoegen aan weekmenu</button>
-     ${r.custom&&!r.community?`<button type="button" class="btn secondary" id="detailCopyCode">Kopieer deelcode</button>`:""}
+     ${!r.community?`<button type="button" class="btn secondary" id="detailCopyCode">Kopieer deelcode</button>`:""}
      ${canPhoto&&img?`<button type="button" class="btn secondary" id="detailChangePhoto">📷 Foto wijzigen</button>`:""}${!r.custom?`<button type="button" class="btn secondary" id="detailCopyForPhoto">📷 Eigen foto toevoegen</button>`:""}
    </div>`;
  $("detailPlanRecipe").onclick=()=>openScheduleRecipe(r,source);
- if(r.custom&&!r.community)$("detailCopyCode").onclick=async()=>{
-   try{
-     const code=r.share_code||await ensureRecipeShareCode(r.dbid);
-     r.share_code=code;r.share_enabled=true;
-     copyTextSafe(code);
-   }catch(e){toast("Deelcode maken lukte niet")}
- };
+ if(!r.community){
+   // Ook ingebouwde recepten krijgen bij openen automatisch een vaste deelcode.
+   shareCodeForRecipe(r).then(code=>{
+     if(code&&$("detailShareCode"))$("detailShareCode").textContent=code;
+   }).catch(e=>{
+     console.warn("Deelcode laden mislukt",e);
+     if($("detailShareCode"))$("detailShareCode").textContent="niet beschikbaar";
+   });
+   $("detailCopyCode").onclick=async()=>{
+     try{
+       const code=await shareCodeForRecipe(r);
+       if(code){$("detailShareCode").textContent=code;copyTextSafe(code)}
+     }catch(e){toast("Deelcode maken lukte niet")}
+   };
+ }
  if(canPhoto&&!img)$("detailAddPhoto").onclick=()=>openPhotoUpload(r.dbid);
  if(canPhoto&&img)$("detailChangePhoto").onclick=()=>openPhotoUpload(r.dbid);
  if(!r.custom)$("detailCopyForPhoto").onclick=()=>copyBuiltinForPhoto(r);
