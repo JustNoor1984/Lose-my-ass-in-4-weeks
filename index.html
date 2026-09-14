@@ -136,6 +136,26 @@ nav{display:none!important}
 .profile-avatar{width:92px;height:92px;border-radius:50%;object-fit:cover;border:1px solid var(--line);background:#eef3ec;display:block}
 .profile-avatar-placeholder{width:92px;height:92px;border-radius:50%;border:1px solid var(--line);background:#eef3ec;display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:800;color:var(--muted)}
 .profile-photo-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+
+/* V7.9.1 compact Home */
+#today .card{padding:14px 16px;margin-bottom:10px}
+#today .v6-dashboard{gap:10px}
+#today .v6-card-title{margin-bottom:5px}
+.home-meal-row{grid-template-columns:72px 115px 1fr auto;min-height:86px;padding:8px 10px}
+.home-meal-photo{width:64px;height:64px;border-radius:10px;object-fit:cover;background:#eef3ec}
+.home-meal-label{grid-column:2}
+.home-meal-select{grid-column:3}
+.home-meal-kcal{grid-column:4}
+.home-meal-detail{grid-column:3/5}
+.home-meal-row label.small{grid-column:3/5}
+.plan-event{padding:10px 12px;border:1px solid #dce8ef;border-radius:12px;background:#fff8ec;margin:8px 0}
+.plan-event .event-kcal{font-weight:800;color:#a36200}
+@media(max-width:650px){
+ .home-meal-row{grid-template-columns:64px 1fr}
+ .home-meal-photo{grid-row:1/4}
+ .home-meal-label,.home-meal-select,.home-meal-kcal,.home-meal-detail,.home-meal-row label.small{grid-column:2}
+ .home-meal-kcal{text-align:left}
+}
 </style></head><body>
 
 <div id="authGate"><div class="wrap">
@@ -220,17 +240,31 @@ nav{display:none!important}
 </div>
 </section>
 
-<section id="week" class="view"><div class="between"><h2>Weekmenu kiezen</h2><div class="tabs" id="weekTabs"></div></div>
-<div class="card"><div class="between"><div><b>Persoonlijk dagdoel</b><div class="small muted">Keuzes die je dagtotaal overschrijden worden geblokkeerd.</div></div><span class="badge" id="weekTarget"></span></div></div><div id="weekPlan"></div></section>
+<section id="week" class="view"><div class="between"><h2>Weekmenu & planning</h2><div class="tabs" id="weekTabs"></div></div>
+<div class="card"><div class="between"><div><b>Persoonlijk dagdoel</b><div class="small muted">Maaltijden én eigen afspraken tellen mee in je dagbudget.</div></div><span class="badge" id="weekTarget"></span></div></div>
+<div class="card">
+ <h3>Eigen afspraak toevoegen</h3>
+ <p class="small muted">Bijvoorbeeld uit eten, verjaardag of borrel. Vul eventueel in hoeveel kcal je hiervoor wilt reserveren; de automatische dagplanning houdt daar rekening mee.</p>
+ <div class="grid2"><label>Datum<input id="eventDate" type="date"></label><label>Afspraak<input id="eventTitle" placeholder="Bijv. uit eten"></label></div>
+ <div class="grid2"><label>Tijd<input id="eventTime" type="time"></label><label>Kcal reserveren<input id="eventKcal" type="number" min="0" step="50" placeholder="Bijv. 800"></label></div>
+ <button class="btn" id="addPlanEvent">Afspraak toevoegen</button>
+ <div id="planEventList" style="margin-top:10px"></div>
+</div>
+<div id="weekPlan"></div></section>
 
 <section id="sport" class="view"><h2>Sport & uitleg</h2><div class="tabs" id="trainingTabs"><button data-training="tai" class="active">Tai Chi Walk</button><button data-training="A">Calisthenics A</button><button data-training="B">Calisthenics B</button></div><div id="trainingGuide"></div>
 <div class="card"><h3>Eigen sport toevoegen</h3><div class="grid2"><label>Activiteit<input id="sportName" placeholder="Bijv. zwemmen"></label><label>Datum<input id="sportDate" type="date"></label></div><div class="grid2"><label>Tijd<input id="sportTime" type="time"></label><label>Duur (min)<input id="sportDuration" type="number" min="1"></label></div><label>Notitie<textarea id="sportNotes"></textarea></label><button class="btn" id="addSport">Toevoegen</button></div><div class="card"><h3>Mijn planning</h3><div id="sportList"></div></div></section>
 
 
 <section id="recipes" class="view">
-  <div class="between"><h2>Recepten</h2><div class="tabs" id="recipeTabs"><button data-rtab="mine" class="active">Mijn recepten</button><button data-rtab="community">Gedeeld</button></div></div>
+  <div class="between"><h2>Recepten</h2><div class="tabs" id="recipeTabs"><button data-rtab="all" class="active">Alle recepten</button><button data-rtab="mine">Mijn recepten</button><button data-rtab="community">Gedeeld</button></div></div>
 
-  <div id="myRecipesPane">
+  <div id="allRecipesPane">
+    <div class="card info">Hier zie je standaard alles bij elkaar: app-recepten, jouw eigen/geïmporteerde recepten en gedeelde recepten.</div>
+    <div id="allRecipeList"></div>
+  </div>
+
+  <div id="myRecipesPane" style="display:none">
     <div class="card">
       <h3>Recept van een website importeren</h3>
       <p class="small muted">Plak een link naar een recept. De app probeert naam, porties, ingrediënten, bereiding, bron en voedingswaarde over te nemen.</p>
@@ -384,7 +418,7 @@ const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const BUILTIN={"bf_oats_apple": {"id": "bf_oats_apple", "slot": "breakfast", "name": "Havermout met appel en kaneel", "kcal": 390, "time": "10 min", "ingredients": [{"name": "Havermout", "qty": 50, "unit": "g", "cat": "Basis"}, {"name": "Halfvolle melk", "qty": 250, "unit": "ml", "cat": "Zuivel"}, {"name": "Appel", "qty": 150, "unit": "g", "cat": "Groente & fruit"}, {"name": "Kaneel", "qty": 1, "unit": "tl", "cat": "Voorraad"}], "steps": ["Doe havermout en melk in een pan.", "Verwarm 5–7 minuten en roer regelmatig.", "Snijd de appel klein en roer door de havermout.", "Bestrooi met kaneel."], "custom": false}, "bf_quark_oats": {"id": "bf_quark_oats", "slot": "breakfast", "name": "Kwark met havermout en appel", "kcal": 405, "time": "5 min", "ingredients": [{"name": "Magere kwark", "qty": 250, "unit": "g", "cat": "Zuivel"}, {"name": "Havermout", "qty": 40, "unit": "g", "cat": "Basis"}, {"name": "Appel", "qty": 150, "unit": "g", "cat": "Groente & fruit"}], "steps": ["Doe de kwark in een kom.", "Roer de havermout erdoor.", "Snijd de appel en voeg toe."], "custom": false}, "bf_eggs_bread": {"id": "bf_eggs_bread", "slot": "breakfast", "name": "2 eieren, volkoren brood en fruit", "kcal": 430, "time": "10 min", "ingredients": [{"name": "Eieren", "qty": 2, "unit": "stuks", "cat": "Eiwit"}, {"name": "Volkorenbrood", "qty": 2, "unit": "sneetjes", "cat": "Basis"}, {"name": "Fruit", "qty": 150, "unit": "g", "cat": "Groente & fruit"}], "steps": ["Kook of bak de eieren.", "Serveer met het volkorenbrood.", "Eet het fruit erbij."], "custom": false}, "bf_banana_oats": {"id": "bf_banana_oats", "slot": "breakfast", "name": "Warme havermout met verwerkte banaan", "kcal": 400, "time": "8 min", "ingredients": [{"name": "Havermout", "qty": 50, "unit": "g", "cat": "Basis"}, {"name": "Halfvolle melk", "qty": 250, "unit": "ml", "cat": "Zuivel"}, {"name": "Banaan", "qty": 60, "unit": "g", "cat": "Groente & fruit"}, {"name": "Kaneel", "qty": 1, "unit": "tl", "cat": "Voorraad"}], "steps": ["Verwarm havermout en melk.", "Prak de banaan er tijdens het koken door.", "Laat indikken en voeg kaneel toe."], "custom": false}, "bf_quark_pear": {"id": "bf_quark_pear", "slot": "breakfast", "name": "Kwark met havermout en peer/appel", "kcal": 400, "time": "5 min", "ingredients": [{"name": "Magere kwark", "qty": 250, "unit": "g", "cat": "Zuivel"}, {"name": "Havermout", "qty": 40, "unit": "g", "cat": "Basis"}, {"name": "Peer of appel", "qty": 150, "unit": "g", "cat": "Groente & fruit"}], "steps": ["Doe de kwark in een kom.", "Meng de havermout erdoor.", "Voeg het gesneden fruit toe."], "custom": false}, "bf_pancakes": {"id": "bf_pancakes", "slot": "breakfast", "name": "Havermout-banaanpannenkoekjes", "kcal": 440, "time": "15 min", "ingredients": [{"name": "Havermout", "qty": 50, "unit": "g", "cat": "Basis"}, {"name": "Ei", "qty": 1, "unit": "stuk", "cat": "Eiwit"}, {"name": "Banaan", "qty": 60, "unit": "g", "cat": "Groente & fruit"}, {"name": "Halfvolle melk", "qty": 40, "unit": "ml", "cat": "Zuivel"}, {"name": "Magere kwark", "qty": 150, "unit": "g", "cat": "Zuivel"}], "steps": ["Prak de banaan.", "Meng met ei, havermout en melk.", "Bak 3–4 kleine pannenkoekjes in een antiaanbakpan.", "Serveer met kwark."], "custom": false}, "lu_eggs": {"id": "lu_eggs", "slot": "lunch", "name": "Volkoren brood met 2 eieren en komkommer", "kcal": 445, "time": "10 min", "ingredients": [{"name": "Volkorenbrood", "qty": 3, "unit": "sneetjes", "cat": "Basis"}, {"name": "Eieren", "qty": 2, "unit": "stuks", "cat": "Eiwit"}, {"name": "Komkommer", "qty": 150, "unit": "g", "cat": "Groente & fruit"}], "steps": ["Kook of bak de eieren.", "Beleg of eet ze naast het brood.", "Serveer met komkommer."], "custom": false}, "lu_cottage": {"id": "lu_cottage", "slot": "lunch", "name": "Volkoren brood met hüttenkäse en komkommer", "kcal": 430, "time": "5 min", "ingredients": [{"name": "Volkorenbrood", "qty": 3, "unit": "sneetjes", "cat": "Basis"}, {"name": "Hüttenkäse", "qty": 150, "unit": "g", "cat": "Zuivel"}, {"name": "Komkommer", "qty": 150, "unit": "g", "cat": "Groente & fruit"}], "steps": ["Besmeer het brood met hüttenkäse.", "Snijd de komkommer en verdeel erover of eet erbij."], "custom": false}, "lu_chicken": {"id": "lu_chicken", "slot": "lunch", "name": "Volkoren brood met kiprestjes en rauwkost", "kcal": 460, "time": "5 min", "ingredients": [{"name": "Volkorenbrood", "qty": 3, "unit": "sneetjes", "cat": "Basis"}, {"name": "Kipfilet", "qty": 100, "unit": "g", "cat": "Eiwit"}, {"name": "Komkommer/wortel", "qty": 150, "unit": "g", "cat": "Groente & fruit"}], "steps": ["Verdeel de kip over het brood.", "Serveer met rauwkost."], "custom": false}, "lu_chicken_or_eggs": {"id": "lu_chicken_or_eggs", "slot": "lunch", "name": "Volkoren brood met kip of 2 eieren", "kcal": 455, "time": "10 min", "ingredients": [{"name": "Volkorenbrood", "qty": 3, "unit": "sneetjes", "cat": "Basis"}, {"name": "Kipfilet", "qty": 100, "unit": "g", "cat": "Eiwit"}, {"name": "Komkommer", "qty": 100, "unit": "g", "cat": "Groente & fruit"}], "steps": ["Gebruik 100 g kipfilet als beleg.", "Serveer met komkommer.", "Je kunt de kip vervangen door 2 eieren; kcal verandert iets."], "custom": false}, "sn_quark_fruit": {"id": "sn_quark_fruit", "slot": "snack", "name": "Kwark met fruit", "kcal": 190, "time": "3 min", "ingredients": [{"name": "Magere kwark", "qty": 200, "unit": "g", "cat": "Zuivel"}, {"name": "Fruit", "qty": 120, "unit": "g", "cat": "Groente & fruit"}], "steps": ["Doe kwark in een kom.", "Voeg het fruit toe."], "custom": false}, "sn_fruit_nuts": {"id": "sn_fruit_nuts", "slot": "snack", "name": "Fruit met ongezouten pinda's", "kcal": 210, "time": "2 min", "ingredients": [{"name": "Fruit", "qty": 150, "unit": "g", "cat": "Groente & fruit"}, {"name": "Ongezouten pinda's", "qty": 20, "unit": "g", "cat": "Voorraad"}], "steps": ["Eet het fruit met de pinda's erbij."], "custom": false}, "sn_quark_apple": {"id": "sn_quark_apple", "slot": "snack", "name": "Kwark met appel", "kcal": 195, "time": "3 min", "ingredients": [{"name": "Magere kwark", "qty": 200, "unit": "g", "cat": "Zuivel"}, {"name": "Appel", "qty": 120, "unit": "g", "cat": "Groente & fruit"}], "steps": ["Snijd de appel.", "Meng met de kwark."], "custom": false}, "sn_egg_fruit_quark": {"id": "sn_egg_fruit_quark", "slot": "snack", "name": "Ei, fruit en kwark", "kcal": 235, "time": "5 min", "ingredients": [{"name": "Ei", "qty": 1, "unit": "stuk", "cat": "Eiwit"}, {"name": "Fruit", "qty": 100, "unit": "g", "cat": "Groente & fruit"}, {"name": "Magere kwark", "qty": 150, "unit": "g", "cat": "Zuivel"}], "steps": ["Kook het ei indien nodig.", "Serveer met fruit en kwark."], "custom": false}, "sn_quark_nuts": {"id": "sn_quark_nuts", "slot": "snack", "name": "Kwark met pinda's", "kcal": 230, "time": "2 min", "ingredients": [{"name": "Magere kwark", "qty": 200, "unit": "g", "cat": "Zuivel"}, {"name": "Ongezouten pinda's", "qty": 20, "unit": "g", "cat": "Voorraad"}], "steps": ["Doe de kwark in een kom.", "Strooi de pinda's erover."], "custom": false}, "di_pasta_chicken": {"id": "di_pasta_chicken", "slot": "dinner", "name": "Kip-pasta met veel groente", "kcal": 610, "time": "20 min", "ingredients": [{"name": "Volkoren pasta", "qty": 75, "unit": "g", "cat": "Basis"}, {"name": "Kipfilet", "qty": 150, "unit": "g", "cat": "Eiwit"}, {"name": "Diepvriesgroente", "qty": 300, "unit": "g", "cat": "Groente & fruit"}, {"name": "Passata", "qty": 200, "unit": "g", "cat": "Groente & fruit"}, {"name": "Olie", "qty": 1, "unit": "tl", "cat": "Voorraad"}], "steps": ["Kook de pasta.", "Bak de kip gaar in de olie.", "Voeg groente toe en bak 5–7 minuten.", "Roer passata en kruiden erdoor.", "Serveer met de pasta."], "custom": false}, "di_rice_chicken": {"id": "di_rice_chicken", "slot": "dinner", "name": "Kip-rijstwok", "kcal": 600, "time": "20 min", "ingredients": [{"name": "Rijst", "qty": 75, "unit": "g", "cat": "Basis"}, {"name": "Kipfilet", "qty": 150, "unit": "g", "cat": "Eiwit"}, {"name": "Wokgroente", "qty": 300, "unit": "g", "cat": "Groente & fruit"}, {"name": "Olie", "qty": 1, "unit": "tl", "cat": "Voorraad"}, {"name": "Sojasaus", "qty": 2, "unit": "tl", "cat": "Voorraad"}], "steps": ["Kook de rijst.", "Bak de kip gaar.", "Voeg wokgroente toe.", "Breng op smaak met sojasaus.", "Serveer met rijst."], "custom": false}, "di_potato_chicken": {"id": "di_potato_chicken", "slot": "dinner", "name": "Aardappelen, kip en groente", "kcal": 585, "time": "25 min", "ingredients": [{"name": "Aardappelen", "qty": 300, "unit": "g", "cat": "Basis"}, {"name": "Kipfilet", "qty": 150, "unit": "g", "cat": "Eiwit"}, {"name": "Groente", "qty": 300, "unit": "g", "cat": "Groente & fruit"}, {"name": "Olie", "qty": 1, "unit": "tl", "cat": "Voorraad"}], "steps": ["Kook of rooster de aardappelen.", "Bak de kip gaar.", "Bereid de groente.", "Serveer samen."], "custom": false}, "di_wraps": {"id": "di_wraps", "slot": "dinner", "name": "Volkoren wraps met kip en bonen", "kcal": 625, "time": "15 min", "ingredients": [{"name": "Volkoren wraps", "qty": 2, "unit": "stuks", "cat": "Basis"}, {"name": "Kipfilet", "qty": 100, "unit": "g", "cat": "Eiwit"}, {"name": "Kidneybonen", "qty": 150, "unit": "g", "cat": "Eiwit"}, {"name": "Paprika/ui", "qty": 150, "unit": "g", "cat": "Groente & fruit"}, {"name": "Sla/komkommer", "qty": 100, "unit": "g", "cat": "Groente & fruit"}, {"name": "Magere kwark", "qty": 30, "unit": "g", "cat": "Zuivel"}], "steps": ["Bak kip, paprika en ui.", "Voeg de bonen toe.", "Meng kwark met kruiden tot saus.", "Vul de wraps met het mengsel en de rauwkost."], "custom": false}, "di_pasta_mince": {"id": "di_pasta_mince", "slot": "dinner", "name": "Volkoren pasta met mager gehakt", "kcal": 620, "time": "20 min", "ingredients": [{"name": "Volkoren pasta", "qty": 75, "unit": "g", "cat": "Basis"}, {"name": "Mager gehakt", "qty": 125, "unit": "g", "cat": "Eiwit"}, {"name": "Groente", "qty": 300, "unit": "g", "cat": "Groente & fruit"}, {"name": "Passata", "qty": 200, "unit": "g", "cat": "Groente & fruit"}, {"name": "Olie", "qty": 1, "unit": "tl", "cat": "Voorraad"}], "steps": ["Kook de pasta.", "Bak het gehakt rul.", "Voeg groente en passata toe.", "Laat kort sudderen en serveer met pasta."], "custom": false}, "di_chili": {"id": "di_chili", "slot": "dinner", "name": "Budget-chili", "kcal": 630, "time": "25 min", "ingredients": [{"name": "Rijst", "qty": 65, "unit": "g", "cat": "Basis"}, {"name": "Mager gehakt", "qty": 125, "unit": "g", "cat": "Eiwit"}, {"name": "Kidneybonen", "qty": 150, "unit": "g", "cat": "Eiwit"}, {"name": "Mais", "qty": 75, "unit": "g", "cat": "Groente & fruit"}, {"name": "Paprika/ui", "qty": 150, "unit": "g", "cat": "Groente & fruit"}, {"name": "Passata", "qty": 200, "unit": "g", "cat": "Groente & fruit"}], "steps": ["Kook de rijst.", "Bak het gehakt rul.", "Voeg ui en paprika toe.", "Voeg bonen, mais en passata toe.", "Laat 8–10 minuten zacht pruttelen."], "custom": false}, "di_potato_beans": {"id": "di_potato_beans", "slot": "dinner", "name": "Aardappelen met kip of bonen en groente", "kcal": 570, "time": "25 min", "ingredients": [{"name": "Aardappelen", "qty": 300, "unit": "g", "cat": "Basis"}, {"name": "Kidneybonen", "qty": 200, "unit": "g", "cat": "Eiwit"}, {"name": "Groente", "qty": 300, "unit": "g", "cat": "Groente & fruit"}, {"name": "Olie", "qty": 1, "unit": "tl", "cat": "Voorraad"}], "steps": ["Kook of rooster de aardappelen.", "Verwarm de bonen.", "Bereid de groente.", "Serveer samen."], "custom": false}};
 const DEFAULTS=[["bf_oats_apple", "lu_eggs", "sn_quark_fruit", "di_pasta_chicken", "bf_quark_oats", "lu_cottage", "sn_quark_fruit", "di_rice_chicken", "bf_eggs_bread", "lu_chicken", "sn_fruit_nuts", "di_potato_chicken", "bf_banana_oats", "lu_eggs", "sn_quark_apple", "di_wraps", "bf_quark_pear", "lu_cottage", "sn_egg_fruit_quark", "di_pasta_mince", "bf_eggs_bread", "lu_eggs", "sn_quark_nuts", "di_chili", "bf_pancakes", "lu_chicken_or_eggs", "sn_quark_fruit", "di_potato_beans"], ["bf_eggs_bread", "lu_cottage", "sn_fruit_nuts", "di_potato_chicken", "bf_banana_oats", "lu_chicken", "sn_quark_apple", "di_wraps", "bf_quark_pear", "lu_eggs", "sn_egg_fruit_quark", "di_pasta_mince", "bf_eggs_bread", "lu_cottage", "sn_quark_nuts", "di_chili", "bf_pancakes", "lu_eggs", "sn_quark_fruit", "di_potato_beans", "bf_oats_apple", "lu_chicken_or_eggs", "sn_quark_fruit", "di_pasta_chicken", "bf_quark_oats", "lu_eggs", "sn_quark_fruit", "di_rice_chicken"], ["bf_quark_pear", "lu_chicken", "sn_egg_fruit_quark", "di_pasta_mince", "bf_eggs_bread", "lu_eggs", "sn_quark_nuts", "di_chili", "bf_pancakes", "lu_cottage", "sn_quark_fruit", "di_potato_beans", "bf_oats_apple", "lu_eggs", "sn_quark_fruit", "di_pasta_chicken", "bf_quark_oats", "lu_chicken_or_eggs", "sn_quark_fruit", "di_rice_chicken", "bf_eggs_bread", "lu_eggs", "sn_fruit_nuts", "di_potato_chicken", "bf_banana_oats", "lu_cottage", "sn_quark_apple", "di_wraps"], ["bf_oats_apple", "lu_eggs", "sn_quark_fruit", "di_potato_beans", "bf_quark_oats", "lu_cottage", "sn_quark_fruit", "di_pasta_chicken", "bf_eggs_bread", "lu_chicken", "sn_quark_fruit", "di_rice_chicken", "bf_banana_oats", "lu_eggs", "sn_fruit_nuts", "di_potato_chicken", "bf_quark_pear", "lu_cottage", "sn_quark_apple", "di_wraps", "bf_eggs_bread", "lu_eggs", "sn_egg_fruit_quark", "di_pasta_mince", "bf_pancakes", "lu_chicken_or_eggs", "sn_quark_nuts", "di_chili"]];
 const SLOT_NAMES={breakfast:"Ontbijt",lunch:"Lunch",snack:"Tussendoor",dinner:"Avondeten"};
-let user=null,profile={},plan={},state={},sports=[],measurements=[],ownRecipes=[],mealChoices=[],foodLog=[],communityRecipes=[],signedImageCache={},profileAvatarUrl=null,recipeTab="mine",weekView=1,training="tai",authMode="login";
+let user=null,profile={},plan={},state={},sports=[],measurements=[],ownRecipes=[],mealChoices=[],foodLog=[],communityRecipes=[],signedImageCache={},profileAvatarUrl=null,recipeTab="all",weekView=1,training="tai",authMode="login";
 const $=x=>document.getElementById(x), esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
 function authDebug(text){
  const el=$("authDebug");
@@ -517,7 +551,7 @@ function stableHash(text){
 function defaultRecipeId(date,slot){
  const d=absolutePlanDay(date);
  if(d==null)return null;
- const target=targetCalories()||1740;
+ const target=Math.max(700,(targetCalories()||1740)-plannedEventCalories(date));
  const shares={breakfast:.27,lunch:.27,snack:.14,dinner:.40};
  const maxes={breakfast:.34,lunch:.34,snack:.20,dinner:.48};
  let candidates=autoRecipePool().filter(r=>r.slot===slot&&r.kcal&&r.kcal<=target*maxes[slot]);
@@ -544,7 +578,7 @@ Object.assign(BUILTIN,{"bf_quark_berries_light":{"id":"bf_quark_berries_light","
 Object.assign(BUILTIN,{"ps_courgetti_tartaar":{"id":"ps_courgetti_tartaar","slot":"dinner","name":"Courgetti met tartaarballetjes","kcal":306,"time":"15 min","ingredients":[{"name":"Rundertartaar","qty":135,"unit":"g","cat":"Eiwit"},{"name":"Courgetti","qty":50,"unit":"g","cat":"Groente & fruit"},{"name":"Tomaat","qty":100,"unit":"g","cat":"Groente & fruit"},{"name":"Tomatenpuree","qty":1,"unit":"tl","cat":"Voorraad"},{"name":"Ui","qty":0.25,"unit":"stuk","cat":"Groente & fruit"},{"name":"Olijfolie","qty":1,"unit":"el","cat":"Voorraad"},{"name":"Paprikapoeder, knoflookpoeder, oregano","qty":1,"unit":"snuf","cat":"Voorraad"}],"steps":["Breng de tartaar op smaak met kruiden en vorm kleine balletjes.","Bak de balletjes rondom gaar.","Bak ui en tomaat met de tomatenpuree tot een warme saus.","Verwarm de courgetti kort en serveer met de saus en tartaarballetjes."],"custom":false,"source_name":"PS. food & lifestyle – Courgetti met tartaarballetjes","source_url":"https://www.psfoodandlifestyle.nl/recepten/courgetti-met-tartaarballetjes/"},"ps_spinazie_geit_omelet":{"id":"ps_spinazie_geit_omelet","slot":"lunch","name":"Spinazie-geitenkaas omelet","kcal":284,"time":"10 min","ingredients":[{"name":"Eieren / omeletbasis","qty":2,"unit":"eieren","cat":"Eiwit"},{"name":"Verse geitenkaas","qty":3,"unit":"tl","cat":"Zuivel"},{"name":"Verse spinazie","qty":50,"unit":"g","cat":"Groente & fruit"},{"name":"Cherrytomaatjes","qty":75,"unit":"g","cat":"Groente & fruit"},{"name":"Olijfolie","qty":1,"unit":"el","cat":"Voorraad"}],"steps":["Klop de eieren los en meng een deel van de spinazie erdoor.","Bak de omelet rustig gaar.","Verdeel geitenkaas en de rest van de spinazie erover.","Bak de tomaatjes kort mee in de pan en serveer erbij."],"custom":false,"source_name":"PS. food & lifestyle – Spinazie-geitenkaas omelet met tomaatjes","source_url":"https://www.psfoodandlifestyle.nl/recepten/spinazie-geitenkaas-omelet-met-tomaatjes/"},"ps_kip_bloemkoolrijst":{"id":"ps_kip_bloemkoolrijst","slot":"dinner","name":"Kip met bloemkoolrijst, paksoi en prei","kcal":340,"time":"25 min","ingredients":[{"name":"Kipfilet","qty":135,"unit":"g","cat":"Eiwit"},{"name":"Bloemkoolrijst","qty":50,"unit":"g","cat":"Groente & fruit"},{"name":"Paksoi","qty":100,"unit":"g","cat":"Groente & fruit"},{"name":"Prei","qty":100,"unit":"g","cat":"Groente & fruit"},{"name":"Knoflook","qty":1,"unit":"teen","cat":"Groente & fruit"},{"name":"Sojasaus","qty":2,"unit":"el","cat":"Voorraad"},{"name":"Olijfolie","qty":1.5,"unit":"el","cat":"Voorraad"}],"steps":["Marineer de kip kort met een deel van de olie, sojasaus, knoflook en chilivlokken.","Bak de kip goudbruin en volledig gaar.","Roerbak paksoi en prei met de rest van de knoflook.","Verwarm de bloemkoolrijst kort en serveer alles samen."],"custom":false,"source_name":"PS. food & lifestyle – Kip met bloemkoolrijst en geroerbakte paksoi en prei","source_url":"https://www.psfoodandlifestyle.nl/recepten/kip-met-bloemkoolrijst-en-geroerbakte-paksoi-en-prei/"},"ps_bimi_ham_ei":{"id":"ps_bimi_ham_ei","slot":"lunch","name":"Bimi met rauwe ham en ei","kcal":320,"time":"15 min","ingredients":[{"name":"Eieren","qty":2,"unit":"stuks","cat":"Eiwit"},{"name":"Rauwe ham","qty":20,"unit":"g","cat":"Eiwit"},{"name":"Bimi","qty":150,"unit":"g","cat":"Groente & fruit"},{"name":"Mayonaise","qty":1,"unit":"el","cat":"Voorraad"},{"name":"Sojasaus","qty":0.5,"unit":"el","cat":"Voorraad"},{"name":"Rode ui","qty":0.25,"unit":"stuk","cat":"Groente & fruit"}],"steps":["Kook of stoom de bimi beetgaar.","Kook de eieren naar wens en halveer ze.","Meng mayonaise met sojasaus tot een snelle dressing.","Serveer bimi met ham, ui, ei en de dressing."],"custom":false,"source_name":"PS. food & lifestyle – Bimi met rauwe ham en ei","source_url":"https://www.psfoodandlifestyle.nl/recepten/bimi-met-rauwe-ham-en-ei/"},"ps_garnalen_yoghurt":{"id":"ps_garnalen_yoghurt","slot":"lunch","name":"Salade met garnalen en yoghurt-mosterd dressing","kcal":430,"time":"15 min","ingredients":[{"name":"Garnalen","qty":45,"unit":"g","cat":"Eiwit"},{"name":"Griekse yoghurt 0%","qty":1,"unit":"el","cat":"Zuivel"},{"name":"IJsbergsla","qty":30,"unit":"g","cat":"Groente & fruit"},{"name":"Tomaat","qty":125,"unit":"g","cat":"Groente & fruit"},{"name":"Avocado","qty":0.25,"unit":"stuk","cat":"Groente & fruit"},{"name":"Rode ui","qty":1,"unit":"el","cat":"Groente & fruit"},{"name":"Grove mosterd","qty":1,"unit":"tl","cat":"Voorraad"},{"name":"Citroensap","qty":0.5,"unit":"tl","cat":"Voorraad"}],"steps":["Bak de garnalen kort tot ze gaar zijn.","Maak een dressing van yoghurt, mosterd en citroensap.","Bak de tomaat eventueel kort mee als je die liever niet rauw eet.","Verdeel sla, avocado, ui, tomaat en garnalen over een bord en voeg de dressing toe."],"custom":false,"source_name":"PS. food & lifestyle – Salade met garnalen en yoghurt-mosterd dressing","source_url":"https://www.psfoodandlifestyle.nl/recepten/salade-met-garnalen-en-yoghurt-mosterd-dressing/"},"ps_quinoa_kip_avocado":{"id":"ps_quinoa_kip_avocado","slot":"lunch","name":"Quinoasalade met kipfilet en avocado","kcal":460,"time":"15 min","ingredients":[{"name":"Kipfilet","qty":135,"unit":"g","cat":"Eiwit"},{"name":"Quinoa","qty":25,"unit":"g","cat":"Basis"},{"name":"Komkommer","qty":150,"unit":"g","cat":"Groente & fruit"},{"name":"Gemengde sla","qty":30,"unit":"g","cat":"Groente & fruit"},{"name":"Avocado","qty":0.25,"unit":"stuk","cat":"Groente & fruit"},{"name":"Sesamzaad","qty":1,"unit":"tl","cat":"Voorraad"},{"name":"Limoensap","qty":2,"unit":"tl","cat":"Voorraad"}],"steps":["Bak de kipfilet gaar met peper, zout en paprikapoeder.","Kook de quinoa en laat kort afkoelen.","Snijd komkommer en avocado.","Verdeel quinoa, sla, komkommer, avocado en kip over een bord en maak af met limoensap en sesam."],"custom":false,"source_name":"PS. food & lifestyle – Quinoasalade met kipfilet en avocado","source_url":"https://www.psfoodandlifestyle.nl/recepten/quinoasalade-met-kipfilet-en-avocado/"},"ps_zalm_radijs":{"id":"ps_zalm_radijs","slot":"dinner","name":"Gegrilde zalm met radijssalade","kcal":430,"time":"15 min","ingredients":[{"name":"Zalmfilet","qty":175,"unit":"g","cat":"Eiwit"},{"name":"Radijs","qty":85,"unit":"g","cat":"Groente & fruit"},{"name":"Waterkers","qty":25,"unit":"g","cat":"Groente & fruit"},{"name":"Citroen","qty":1,"unit":"partje","cat":"Groente & fruit"},{"name":"Olijfolie","qty":1.5,"unit":"el","cat":"Voorraad"}],"steps":["Breng de zalm op smaak en gril hem tot de gewenste gaarheid.","Snijd de radijs en meng met waterkers.","Breng de salade op smaak met citroen en een kleine hoeveelheid olie.","Serveer de salade naast de zalm."],"custom":false,"source_name":"PS. food & lifestyle – Gegrilde zalm met radijsjessalade","source_url":"https://www.psfoodandlifestyle.nl/koolhydraatarme-recepten/gegrilde-zalm-met-radijsjessalade"},"ps_cacio_pepe":{"id":"ps_cacio_pepe","slot":"dinner","name":"Spaghetti cacio e pepe met olijven en citroen","kcal":469,"time":"15 min","ingredients":[{"name":"Eiwitrijke of koolhydraatarme spaghetti","qty":1,"unit":"portie","cat":"Basis"},{"name":"Parmezaanse kaas","qty":30,"unit":"g","cat":"Zuivel"},{"name":"Komkommer","qty":200,"unit":"g","cat":"Groente & fruit"},{"name":"Rozijnen","qty":10,"unit":"g","cat":"Basis"},{"name":"Olijven","qty":10,"unit":"stuks","cat":"Voorraad"},{"name":"Citroensap","qty":1,"unit":"tl","cat":"Voorraad"}],"steps":["Kook de spaghetti volgens de verpakking.","Rasp de Parmezaanse kaas.","Meng de warme pasta met citroen, kaas, olijven, rozijnen en peper.","Serveer de komkommer ernaast."],"custom":false,"source_name":"PS. food & lifestyle – Spaghetti cacio e pepe met olijven en citroen","source_url":"https://www.psfoodandlifestyle.nl/koolhydraatarme-recepten/spaghetti-cacio-e-pepe-met-olijven-en-citroen"},"ps_bloemkoolsoep_ham":{"id":"ps_bloemkoolsoep_ham","slot":"dinner","name":"Bloemkoolsoep met krokante rauwe ham","kcal":483,"time":"30 min","ingredients":[{"name":"Bloemkool","qty":100,"unit":"g","cat":"Groente & fruit"},{"name":"Rauwe ham","qty":45,"unit":"g","cat":"Eiwit"},{"name":"Ui","qty":0.25,"unit":"stuk","cat":"Groente & fruit"},{"name":"Knoflook","qty":0.5,"unit":"teen","cat":"Groente & fruit"},{"name":"Kookroom light","qty":1,"unit":"el","cat":"Zuivel"},{"name":"Bouillon","qty":150,"unit":"ml","cat":"Voorraad"},{"name":"Peterselie","qty":1,"unit":"takje","cat":"Groente & fruit"}],"steps":["Fruit ui en knoflook kort.","Voeg bloemkool en bouillon toe en kook tot de bloemkool zacht is.","Bak de ham krokant in een droge pan.","Pureer de soep, roer de kookroom erdoor en garneer met ham en peterselie."],"custom":false,"source_name":"PS. food & lifestyle – Bloemkoolsoep met krokante rauwe ham en peterselie","source_url":"https://www.psfoodandlifestyle.nl/recepten/bloemkoolsoep-met-krokante-rauwe-ham-en-peterselie/"}});
 function allRecipes(){return [...Object.values(BUILTIN),...ownRecipes.map(customToRecipe),...communityRecipes]} function getRecipe(id){return allRecipes().find(r=>r.id===id)}
 function selectedRecipe(date,slot){const c=mealChoice(date,slot),id=c?.meal_name||defaultRecipeId(date,slot);return getRecipe(id)}
-function dayTotal(date, overrideSlot=null, overrideRecipe=null){return ["breakfast","lunch","snack","dinner"].reduce((s,slot)=>{let r=slot===overrideSlot?overrideRecipe:selectedRecipe(date,slot);return s+(r?.kcal||0)},0)}
+function dayTotal(date, overrideSlot=null, overrideRecipe=null){return plannedEventCalories(date)+["breakfast","lunch","snack","dinner"].reduce((s,slot)=>{let r=slot===overrideSlot?overrideRecipe:selectedRecipe(date,slot);return s+(r?.kcal||0)},0)}
 async function signedRecipeImage(path){
  if(!path)return null;
  if(signedImageCache[path])return signedImageCache[path];
@@ -751,7 +785,7 @@ function homeChosenRecipe(date,slot){
  return selectedRecipe(date,slot);
 }
 function homeChosenTotal(date=iso()){
- return ["breakfast","lunch","snack","dinner"].reduce((sum,slot)=>sum+(homeChosenRecipe(date,slot)?.kcal||0),0);
+ return plannedEventCalories(date)+["breakfast","lunch","snack","dinner"].reduce((sum,slot)=>sum+(homeChosenRecipe(date,slot)?.kcal||0),0);
 }
 function caloriesFromOtherSlots(date,slot){
  return ["breakfast","lunch","snack","dinner"]
@@ -760,7 +794,7 @@ function caloriesFromOtherSlots(date,slot){
 }
 function homeAllowedRecipes(date,slot){
  const target=targetCalories();
- const otherTotal=caloriesFromOtherSlots(date,slot);
+ const otherTotal=caloriesFromOtherSlots(date,slot)+plannedEventCalories(date);
  return allRecipes()
    .filter(r=>r.slot===slot&&r.kcal)
    .filter(r=>!target || otherTotal+(+r.kcal)<=target)
@@ -776,7 +810,7 @@ async function saveHomeMeal(date,slot,recipeId){
    return;
  }
  const r=getRecipe(recipeId); if(!r)return toast("Maaltijd niet gevonden");
- const otherTotal=caloriesFromOtherSlots(date,slot), target=targetCalories();
+ const otherTotal=caloriesFromOtherSlots(date,slot)+plannedEventCalories(date), target=targetCalories();
  if(target && otherTotal+(+r.kcal)>target){
    renderToday();
    return toast("Deze keuze past niet meer binnen je resterende calorie-budget");
@@ -791,6 +825,42 @@ async function saveHomeMeal(date,slot,recipeId){
 }
 
 
+
+function planningEvents(){
+ state.planningEvents=Array.isArray(state.planningEvents)?state.planningEvents:[];
+ return state.planningEvents;
+}
+function eventsForDate(date){
+ return planningEvents().filter(e=>e.date===date).sort((a,b)=>(a.time||"").localeCompare(b.time||""));
+}
+function plannedEventCalories(date){
+ return eventsForDate(date).reduce((s,e)=>s+(+e.kcal||0),0);
+}
+async function addPlanningEvent(){
+ const date=$("eventDate").value, title=$("eventTitle").value.trim(), time=$("eventTime").value, kcal=+($("eventKcal").value||0);
+ if(!date||!title)return toast("Vul datum en afspraak in");
+ planningEvents().push({id:(crypto.randomUUID?crypto.randomUUID():String(Date.now())),date,title,time:time||"",kcal});
+ await persistAppState();
+ $("eventTitle").value="";$("eventTime").value="";$("eventKcal").value="";
+ renderPlanEvents();renderWeek();renderToday();renderShopping();
+ toast("Afspraak toegevoegd");
+}
+async function deletePlanningEvent(id){
+ state.planningEvents=planningEvents().filter(e=>e.id!==id);
+ await persistAppState();
+ renderPlanEvents();renderWeek();renderToday();renderShopping();
+}
+function renderPlanEvents(){
+ const host=$("planEventList"); if(!host)return;
+ const events=planningEvents().slice().sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+ if(!events.length){host.innerHTML='<div class="small muted">Nog geen eigen afspraken toegevoegd.</div>';return}
+ host.innerHTML=events.slice(0,20).map(e=>`<div class="plan-event between"><div><b>${esc(e.title)}</b><div class="small muted">${nl(e.date)}${e.time?` • ${esc(e.time)}`:""}${e.kcal?` • ${Math.round(e.kcal)} kcal gereserveerd`:""}</div></div><button class="btn secondary sm" onclick="deletePlanningEvent('${esc(e.id)}')">Verwijder</button></div>`).join("");
+}
+function eventHtmlForDate(date){
+ const ev=eventsForDate(date);
+ if(!ev.length)return "";
+ return ev.map(e=>`<div class="plan-event">📅 <b>${esc(e.title)}</b>${e.time?` • ${esc(e.time)}`:""}${e.kcal?` <span class="event-kcal">• ${Math.round(e.kcal)} kcal gereserveerd</span>`:""}</div>`).join("");
+}
 function dayDoneState(date=iso()){
  state.dailyDone=state.dailyDone||{};
  state.dailyDone[date]=state.dailyDone[date]||{meals:{},sport:false};
@@ -891,7 +961,7 @@ function renderToday(){
 
  const date=iso(), slots=["breakfast","lunch","snack","dinner"];
  $("todayMeals").className="home-meal-builder";
- $("todayMeals").innerHTML="";
+ $("todayMeals").innerHTML=eventHtmlForDate(date);
 
  slots.forEach(slot=>{
    const selected=homeChosenRecipe(date,slot);
@@ -910,7 +980,9 @@ function renderToday(){
    ].join("");
 
    const mealDone=!!dayDoneState(date).meals[slot];
+   const fallbackImg=selected?mealImage(selected,slot):mealImage(null,slot);
    row.innerHTML=`
+     <img class="home-meal-photo" src="${fallbackImg}" alt="${selected?esc(selected.name):esc(SLOT_NAMES[slot])}">
      <div class="home-meal-label"><b>${SLOT_NAMES[slot]}</b><span>${available!=null?`Tot ± ${available} kcal beschikbaar`:""}</span></div>
      <select class="home-meal-select">${options}</select>
      <div class="home-meal-kcal">${selected?.kcal?`± ${selected.kcal} kcal`:"—"}</div>
@@ -921,6 +993,9 @@ function renderToday(){
    select.onchange=()=>saveHomeMeal(date,slot,select.value);
    row.querySelector(".meal-done").onchange=e=>toggleMealDone(slot,e.target.checked);
    $("todayMeals").appendChild(row);
+   if(selected?.image_path){
+     signedRecipeImage(selected.image_path).then(url=>{if(url&&row.isConnected){const im=row.querySelector(".home-meal-photo");if(im)im.src=url}}).catch(()=>{});
+   }
 
    if(selected){
      const detail=document.createElement("button");
@@ -973,6 +1048,8 @@ function renderGroceryPreview(){
  $("groceryPreview").innerHTML=items.map(x=>`<div class="grocery-v6"><img src="${x[0]}"><span>${x[1]}<br><small class="muted">Lidl • kies actuele variant in winkel</small></span><span>✓</span></div>`).join("")
 }
 function renderWeek(){
+ if($("eventDate")&&!$("eventDate").value)$("eventDate").value=iso();
+ renderPlanEvents();
  $("weekTabs").innerHTML="";
  for(let w=1;w<=4;w++){
    let b=document.createElement("button");
@@ -993,7 +1070,7 @@ function renderWeek(){
    const date=addDays(cycleStart,(weekView-1)*7+d), total=dayTotal(date);
    let box=document.createElement("div");box.className="card";
    const sportPlan=plannedSportForDate(date);
-   box.innerHTML=`<div class="between"><div><h3>${nl(date)}</h3><div class="small muted">Doorlopende planning • week ${weekView}</div><div class="small" style="margin-top:4px">🏃 <b>${esc(sportPlan.name)}</b> • ${esc(sportPlan.duration)}</div></div><div class="day-total ${t&&total>t?"over":"under"}">± ${total}${t?` / ${t}`:""} kcal</div></div><div class="mealgrid"></div>`;
+   box.innerHTML=`<div class="between"><div><h3>${nl(date)}</h3><div class="small muted">Doorlopende planning • week ${weekView}</div><div class="small" style="margin-top:4px">🏃 <b>${esc(sportPlan.name)}</b> • ${esc(sportPlan.duration)}</div></div><div class="day-total ${t&&total>t?"over":"under"}">± ${total}${t?` / ${t}`:""} kcal</div></div>${eventHtmlForDate(date)}<div class="mealgrid"></div>`;
    let grid=box.querySelector(".mealgrid");
    for(const slot of ["breakfast","lunch","snack","dinner"]){
      let r=selectedRecipe(date,slot),m=document.createElement("div");m.className="meal";
@@ -1021,9 +1098,56 @@ async function loadCommunityRecipes(){
 function setRecipeTab(tab){
  recipeTab=tab;
  document.querySelectorAll("#recipeTabs button").forEach(b=>b.classList.toggle("active",b.dataset.rtab===tab));
+ $("allRecipesPane").style.display=tab==="all"?"block":"none";
  $("myRecipesPane").style.display=tab==="mine"?"block":"none";
  $("communityRecipesPane").style.display=tab==="community"?"block":"none";
+ if(tab==="all")renderAllRecipeOverview();
+ if(tab==="mine")renderRecipes();
  if(tab==="community")renderCommunityRecipes();
+}
+async function renderAllRecipeOverview(){
+ const host=$("allRecipeList"); if(!host)return;
+ host.innerHTML="";
+ const items=[
+   ...Object.values(BUILTIN).map(r=>({r,source:"builtin"})),
+   ...ownRecipes.map(x=>({r:customToRecipe(x),source:"mine"})),
+   ...communityRecipes.map(r=>({r,source:"community"}))
+ ];
+ if(!items.length){host.innerHTML='<div class="card muted">Nog geen recepten beschikbaar.</div>';return}
+ const grid=document.createElement("div");grid.className="recipe-grid";host.appendChild(grid);
+ const seen=new Set();
+ for(const item of items){
+   const key=item.r.id;
+   if(seen.has(key))continue;
+   seen.add(key);
+   grid.appendChild(await recipeTile(item.r,item.source));
+ }
+}
+async function renderRecipes(){
+ const host=$("recipeList"); if(!host)return;
+ host.innerHTML="";
+ const type=$("recipeFilterType")?.value||"all";
+ const max=+($("recipeFilterKcal")?.value||0);
+ const origin=$("recipeFilterOrigin")?.value||"all";
+ const q=($("recipeFilterSearch")?.value||"").trim().toLowerCase();
+ let items=[
+   ...Object.values(BUILTIN).map(r=>({r,source:"builtin",origin:"standard"})),
+   ...ownRecipes.map(x=>({r:customToRecipe(x),source:"mine",origin:x.source_url?"source":"mine"}))
+ ];
+ items=items.filter(({r,origin:o})=>{
+   if(type!=="all"&&r.slot!==type)return false;
+   if(max&&(+r.kcal||0)>max)return false;
+   if(origin!=="all"&&o!==origin)return false;
+   if(q){
+     const hay=(r.name+" "+(r.ingredients||[]).map(x=>typeof x==="string"?x:x.name).join(" ")).toLowerCase();
+     if(!hay.includes(q))return false;
+   }
+   return true;
+ });
+ if($("recipeFilterCount"))$("recipeFilterCount").textContent=`${items.length} recepten`;
+ if(!items.length){host.innerHTML='<div class="card muted">Geen recepten gevonden met deze filters.</div>';return}
+ const grid=document.createElement("div");grid.className="recipe-grid";host.appendChild(grid);
+ for(const item of items)grid.appendChild(await recipeTile(item.r,item.source));
 }
 async function recipeTile(r,source){
  const img = r.image_path ? await signedRecipeImage(r.image_path) : (source==="builtin"?mealImage(r,r.slot):null);
@@ -1118,7 +1242,7 @@ async function uploadRecipePhoto(){
  const db=await sb.from("recipes").update({image_path:path}).eq("id",id).eq("user_id",user.id).select().single();
  if(db.error)return toast("Foto koppelen lukte niet");
  const idx=ownRecipes.findIndex(x=>x.id===id);if(idx>=0)ownRecipes[idx]=db.data;
- closeModal("photoRecipeModal");closeModal("recipeDetailModal");renderRecipes();if(recipeTab==="community")renderCommunityRecipes();toast("Foto toegevoegd");
+ closeModal("photoRecipeModal");closeModal("recipeDetailModal");renderRecipes();renderAllRecipeOverview();if(recipeTab==="community")renderCommunityRecipes();toast("Foto toegevoegd");
 }
 function openScheduleRecipe(r,source){
  if(!plan.start_date)return toast("Stel eerst je startdatum in bij Profiel");
@@ -1336,7 +1460,7 @@ async function addRecipe(){
    $("recipeSourceBox").style.display="none";
    $("recipeImportStatus").textContent="";
    updateRecipeCalcPreview();
-   renderRecipes();
+   renderRecipes();renderAllRecipeOverview();
    toast(`Opgeslagen • ± ${Math.round(total/servings)} kcal/portie`);
  }catch(e){
    console.error("Recipe save error",e);
@@ -1378,8 +1502,8 @@ async function importRecipeFromUrl(){
  }
 }
 async function shareRecipe(id){let {data,error}=await sb.rpc("share_recipe",{p_recipe_id:id});if(error)return toast("Delen lukte niet");$("shareCode").textContent=data;openModal("shareModal")}
-async function deleteRecipe(id){if(!confirm("Recept verwijderen?"))return;let {error}=await sb.from("recipes").delete().eq("id",id);if(error)return toast("Verwijderen lukte niet");ownRecipes=ownRecipes.filter(x=>x.id!==id);renderRecipes();toast("Verwijderd")}
-async function importRecipe(){let code=$("importCode").value.trim();if(!code)return;let prev=await sb.rpc("preview_shared_recipe",{p_code:code});if(prev.error||!prev.data?.length)return toast("Deelcode niet gevonden");let r=prev.data[0];if(!confirm(`Importeer "${r.recipe_name}"?`))return;let imp=await sb.rpc("import_shared_recipe",{p_code:code});if(imp.error)return toast("Importeren lukte niet");let fresh=await sb.from("recipes").select("*").eq("id",imp.data).single();if(fresh.data)ownRecipes.push(fresh.data);$("importCode").value="";renderRecipes();toast("Recept geïmporteerd")}
+async function deleteRecipe(id){if(!confirm("Recept verwijderen?"))return;let {error}=await sb.from("recipes").delete().eq("id",id);if(error)return toast("Verwijderen lukte niet");ownRecipes=ownRecipes.filter(x=>x.id!==id);renderRecipes();renderAllRecipeOverview();toast("Verwijderd")}
+async function importRecipe(){let code=$("importCode").value.trim();if(!code)return;let prev=await sb.rpc("preview_shared_recipe",{p_code:code});if(prev.error||!prev.data?.length)return toast("Deelcode niet gevonden");let r=prev.data[0];if(!confirm(`Importeer "${r.recipe_name}"?`))return;let imp=await sb.rpc("import_shared_recipe",{p_code:code});if(imp.error)return toast("Importeren lukte niet");let fresh=await sb.from("recipes").select("*").eq("id",imp.data).single();if(fresh.data)ownRecipes.push(fresh.data);$("importCode").value="";renderRecipes();renderAllRecipeOverview();toast("Recept geïmporteerd")}
 
 function renderShopping(){let w=+$("shoppingWeek").value||1;$("shoppingList").innerHTML="";if(!plan.start_date)return;let agg={};for(let d=0;d<7;d++){let date=addDays((currentCycleStart(iso())||plan.start_date),(w-1)*7+d);for(const slot of ["breakfast","lunch","snack","dinner"]){let r=selectedRecipe(date,slot);for(const x of r?.ingredients||[]){if(typeof x==="string"){let k="Eigen|"+x;agg[k]={cat:"Eigen recept",name:x,qty:null,unit:""};continue}let k=(x.cat||"Overig")+"|"+x.name+"|"+x.unit;if(!agg[k])agg[k]={cat:x.cat||"Overig",name:x.name,qty:0,unit:x.unit};agg[k].qty+=+x.qty||0}}}
  let groups={};Object.values(agg).forEach(x=>(groups[x.cat]??=[]).push(x));for(const [cat,items] of Object.entries(groups)){let box=document.createElement("div");box.className="card shopcat";box.innerHTML=`<h3>${esc(cat)}</h3>`;items.sort((a,b)=>a.name.localeCompare(b.name)).forEach(x=>{let line=document.createElement("div");line.className="shopline";line.innerHTML=`<span>${esc(x.name)}</span><b>${x.qty!=null?`${Math.round(x.qty*10)/10} ${esc(x.unit)}`:"1×"}</b>`;box.appendChild(line)});$("shoppingList").appendChild(box)}}
@@ -1459,7 +1583,7 @@ async function saveDifferentMeal(){
  }
  ["differentName","differentQty","differentKcal"].forEach(id=>$(id).value="");$("alsoSaveMeal").checked=false;closeModal("differentModal");renderAll();toast("Dag opnieuw berekend")
 }
-function renderAll(){renderEstimate();renderToday();renderWeek();renderGuide();renderSports();renderRecipes();renderShopping();renderProgress()}
+function renderAll(){renderEstimate();renderToday();renderWeek();renderGuide();renderSports();renderRecipes();renderAllRecipeOverview();renderPlanEvents();renderShopping();renderProgress()}
 function setView(v,navKey=null){
  document.querySelectorAll(".view").forEach(x=>x.classList.toggle("active",x.id===v));
  const fallback={today:"home",sport:"sport",week:"planning",shopping:"shopping",recipes:"recipes",settings:"settings"}[v]||null;
@@ -1475,6 +1599,7 @@ $("profilePhotoInput").onchange=()=>{const f=$("profilePhotoInput").files?.[0];i
 $("removeProfilePhoto").onclick=removeProfilePhoto;
 if($("openTodaySport"))$("openTodaySport").onclick=openPlannedSport;
 if($("todaySportDone"))$("todaySportDone").onchange=e=>toggleSportDone(e.target.checked);
+if($("addPlanEvent"))$("addPlanEvent").onclick=addPlanningEvent;
 $("importRecipeUrl").onclick=importRecipeFromUrl;
 $("recipeIngredients").addEventListener("input",updateRecipeCalcPreview);
 $("recipeServings").addEventListener("input",updateRecipeCalcPreview);$("importRecipe").onclick=importRecipe;$("addSport").onclick=addSport;$("addMeasurement").onclick=addMeasurement;
@@ -1487,7 +1612,7 @@ if($("clearRecipeFilters"))$("clearRecipeFilters").onclick=()=>{
 };
 
 $("uploadRecipePhoto").onclick=uploadRecipePhoto;
-$("confirmScheduleRecipe").onclick=confirmScheduleRecipe;$("ateDifferent").onclick=()=>openModal("differentModal");$("quickDifferent").onclick=()=>openModal("differentModal");$("saveDifferent").onclick=saveDifferentMeal;$("logout").onclick=()=>sb.auth.signOut();
+$("confirmScheduleRecipe").onclick=confirmScheduleRecipe;$("ateDifferent").onclick=()=>openModal("differentModal");$("saveDifferent").onclick=saveDifferentMeal;$("logout").onclick=()=>sb.auth.signOut();
 
 async function showSession(session){
  if(!session){
