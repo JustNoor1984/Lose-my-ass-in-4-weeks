@@ -353,8 +353,18 @@ async function submitAuth(){
  try{
    if(authMode==="login"){
      const {data,error}=await sb.auth.signInWithPassword({email,password});
-     if(error){msg.textContent=error.message;return;}
-     if(!data?.session)msg.textContent="Inloggen lukte niet. Probeer het opnieuw.";
+     if(error){
+       console.error("Login error",error);
+       msg.textContent=error.message || "Inloggen lukte niet.";
+       return;
+     }
+     if(!data?.session){
+       msg.textContent="Inloggen lukte niet: er is geen sessie aangemaakt.";
+       return;
+     }
+     msg.textContent="Ingelogd. App wordt geopend…";
+     await showSession(data.session);
+     return;
    }else{
      if(!name){msg.textContent="Vul je naam in.";return;}
      const {error}=await sb.auth.signUp({
@@ -365,7 +375,7 @@ async function submitAuth(){
    }
  }catch(e){
    console.error("Auth error",e);
-   msg.textContent="Er ging iets mis bij het inloggen. Vernieuw de pagina en probeer opnieuw.";
+   msg.textContent="Inloggen gaf een fout: " + (e?.message || "onbekende fout");
  }finally{
    btn.disabled=false;
    btn.textContent=oldText;
