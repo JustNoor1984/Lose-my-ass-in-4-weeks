@@ -109,6 +109,25 @@ nav{display:none!important}
 .recipe-detail-photo{width:100%;max-height:330px;object-fit:cover;border-radius:12px}
 .recipe-detail-section{margin-top:16px}
 .recipe-detail-section li{margin:7px 0;line-height:1.45}
+
+/* V7.4 home meal builder */
+.home-meal-builder{display:grid;gap:10px;margin-top:12px}
+.home-meal-row{display:grid;grid-template-columns:125px 1fr auto;gap:10px;align-items:center;padding:10px;border:1px solid #dce8ef;border-radius:12px;background:#fff}
+.home-meal-label b{display:block}
+.home-meal-label span{font-size:.76rem;color:#6c7b86}
+.home-meal-select{width:100%;min-width:0}
+.home-meal-select:disabled{opacity:.55;background:#f3f6f7}
+.home-meal-kcal{min-width:76px;text-align:right;font-weight:800;color:#008f5c}
+.home-meal-detail{grid-column:2/4;font-size:.78rem;color:#697984}
+.home-budget{margin-top:12px;padding:12px;border-radius:12px;background:#effaf5}
+.home-budget.over{background:#fff1f1;color:#a62929}
+.home-budget-bar{height:9px;background:#dfeae5;border-radius:999px;overflow:hidden;margin-top:8px}
+.home-budget-fill{height:100%;background:#16a36a;border-radius:999px}
+@media(max-width:650px){
+ .home-meal-row{grid-template-columns:1fr}
+ .home-meal-kcal{text-align:left}
+ .home-meal-detail{grid-column:auto}
+}
 </style></head><body>
 
 <div id="authGate"><div class="wrap">
@@ -139,7 +158,7 @@ nav{display:none!important}
 <main>
 <section id="today" class="view active">
 <div class="v6-dashboard">
- <div class="card"><h2 class="v6-card-title"><span class="stepno">1.</span>Kies je maaltijden</h2><p class="small muted">Tik op een maaltijd om details te bekijken of pas je dag aan.</p><div class="between"><span class="badge" id="planBadge">Startdatum</span><span class="badge" id="calorieBadge">Caloriedoel</span></div><div id="todayMeals" class="mealgrid" style="grid-template-columns:1fr;margin-top:8px"></div><button class="btn secondary" id="ateDifferent" style="width:100%;margin-top:8px">＋ Ik heb iets anders gegeten</button><div id="todayTotal" class="day-total"></div></div>
+ <div class="card"><h2 class="v6-card-title"><span class="stepno">1.</span>Kies je maaltijden</h2><p class="small muted">Kies van boven naar beneden. Na elke keuze laat de volgende lijst alleen maaltijden zien die nog binnen je calorie-doel passen.</p><div class="between"><span class="badge" id="planBadge">Startdatum</span><span class="badge" id="calorieBadge">Caloriedoel</span></div><div id="todayMeals" class="mealgrid" style="grid-template-columns:1fr;margin-top:8px"></div><button class="btn secondary" id="ateDifferent" style="width:100%;margin-top:8px">＋ Ik heb iets anders gegeten</button><div id="todayTotal" class="day-total"></div></div>
  <div class="card"><h2 class="v6-card-title"><span class="stepno">2.</span>Recept details</h2><img id="featuredMealImg" class="recipe-hero" src="assets/meal-oats.jpg"><div id="featuredRecipe"><h3>Havermout met appel</h3><b style="color:#00985f">±390 kcal</b><p class="small muted">Tik links op een maaltijd voor ingrediënten, grammages en bereiding.</p></div></div>
  <div class="card"><h2 class="v6-card-title"><span class="stepno">3.</span>Jouw caloriebehoefte</h2><p class="small muted">Automatisch op basis van jouw profiel.</p><div id="todayCalorieSummary" class="ok"></div><button class="btn" onclick="setView('settings')" style="width:100%;margin-top:10px">Bekijk mijn gegevens</button></div>
  <div class="card"><h2 class="v6-card-title"><span class="stepno">4.</span>Recept delen</h2><img class="recipe-hero" src="assets/meal-pancakes.jpg"><h3>Deel met familie</h3><p class="small muted">Alleen recept, ingrediënten en bereiding worden gedeeld. Geen persoonlijke gegevens.</p><button class="btn" onclick="setView('recipes')" style="width:100%">Naar mijn recepten</button></div>
@@ -348,21 +367,110 @@ function plannedConsumedCalories(date=iso()){
  return slots.reduce((s,slot)=>s+(passed[slot]?(selectedRecipe(date,slot)?.kcal||0):0),0);
 }
 function consumedToday(){let a=actualCalories();return a>0?a:plannedConsumedCalories()}
+function homeChosenRecipe(date,slot){
+ const c=mealChoice(date,slot);
+ return c?getRecipe(c.meal_name):null;
+}
+function homeChosenTotal(date=iso()){
+ return ["breakfast","lunch","snack","dinner"].reduce((sum,slot)=>sum+(homeChosenRecipe(date,slot)?.kcal||0),0);
+}
+function minRecipeKcal(slot){
+ const vals=allRecipes().filter(r=>r.slot===slot&&r.kcal>0).map(r=>+r.kcal);
+ return vals.length?Math.min(...vals):0;
+}
+function futureMinimumAfter(slot){
+ const slots=["breakfast","lunch","snack","dinner"], idx=slots.indexOf(slot);
+ return slots.slice(idx+1).reduce((sum,s)=>sum+minRecipeKcal(s),0);
+}
+function priorSlotsChosen(date,slot){
+ const slots=["breakfast","lunch","snack","dinner"], idx=slots.indexOf(slot);
+ return slots.slice(0,idx).every(s=>!!homeChosenRecipe(date,s));
+}
+function priorChosenCalories(date,slot){
+ const slots=["breakfast","lunch","snack","dinner"], idx=slots.indexOf(slot);
+ return slots.slice(0,idx).reduce((sum,s)=>sum+(homeChosenRecipe(date,s)?.kcal||0),0);
+}
+function homeAllowedRecipes(date,slot){
+ const target=targetCalories(), prior=priorChosenCalories(date,slot), futureMin=futureMinimumAfter(slot);
+ return allRecipes()
+   .filter(r=>r.slot===slot&&r.kcal)
+   .filter(r=>!target || prior+(+r.kcal)+futureMin<=target)
+   .sort((a,b)=>(+a.kcal)-(+b.kcal));
+}
+async function saveHomeMeal(date,slot,recipeId){
+ if(!recipeId)return;
+ const r=getRecipe(recipeId); if(!r)return toast("Maaltijd niet gevonden");
+ const slots=["breakfast","lunch","snack","dinner"], idx=slots.indexOf(slot);
+ const payload={user_id:user.id,meal_date:date,meal_type:slot,meal_name:r.id,recipe_id:r.custom?r.dbid:null};
+ const res=await sb.from("meal_choices").upsert(payload,{onConflict:"user_id,meal_date,meal_type"}).select().single();
+ if(res.error)return toast("Keuze opslaan lukte niet");
+
+ // Changing an earlier meal resets later choices, so the next dropdown is recalculated cleanly.
+ const later=slots.slice(idx+1);
+ if(later.length){
+   const del=await sb.from("meal_choices").delete().eq("user_id",user.id).eq("meal_date",date).in("meal_type",later);
+   if(del.error) return toast("Maaltijd opgeslagen, maar latere keuzes konden niet worden vernieuwd");
+ }
+ mealChoices=mealChoices.filter(x=>!(x.meal_date===date && (x.meal_type===slot || later.includes(x.meal_type))));
+ mealChoices.push(res.data);
+
+ renderToday(); renderWeek(); renderShopping();
+ const next=slots[idx+1];
+ toast(next?`${SLOT_NAMES[slot]} gekozen. Kies nu ${SLOT_NAMES[next].toLowerCase()}.`:"Dagmenu compleet");
+}
 function renderToday(){
  const t=targetCalories();$("calorieBadge").textContent=t?`Doel ± ${t} kcal`:"Profiel aanvullen";
  if(!plan.start_date){$("planBadge").textContent="Startdatum instellen";$("todayMeals").innerHTML="";$("todayTotal").innerHTML="";return}
  let di=dayIndexForDate(iso());$("planBadge").textContent=di==null?"Buiten 28 dagen":`Week ${Math.floor(di/7)+1} • Dag ${di+1}`;
+
+ const date=iso(), slots=["breakfast","lunch","snack","dinner"];
+ $("todayMeals").className="home-meal-builder";
  $("todayMeals").innerHTML="";
- for(const slot of ["breakfast","lunch","snack","dinner"]){
-   let r=selectedRecipe(iso(),slot),d=document.createElement("div");d.className="meal";
-   d.innerHTML=`<img class="meal-thumb" src="${mealImage(r,slot)}"><div class="meal-copy"><b>${SLOT_NAMES[slot]}</b><br>${esc(r?.name||"Kies een maaltijd")}<div class="kcal">${r?.kcal?`± ${r.kcal} kcal`:""}</div></div>`;
-   d.onclick=()=>{if(r){showRecipe(r);$("featuredMealImg").src=mealImage(r,slot);$("featuredRecipe").innerHTML=`<h3>${esc(r.name)}</h3><b style="color:#00985f">±${r.kcal||"?"} kcal</b>`+recipeDetails(r)}};
-   $("todayMeals").appendChild(d)
- }
- const planned=dayTotal(iso()), eaten=consumedToday(), remaining=t?Math.max(0,t-eaten):0, pct=t?Math.min(100,Math.round(eaten/t*100)):0;
- $("todayTotal").innerHTML=`<div class="between"><b>Dagmenu ± ${planned} kcal</b><span>${t?`doel ± ${t}`:""}</span></div>`;
+
+ slots.forEach((slot,idx)=>{
+   const selected=homeChosenRecipe(date,slot);
+   const enabled=idx===0 || priorSlotsChosen(date,slot);
+   const allowed=enabled?homeAllowedRecipes(date,slot):[];
+   const prior=priorChosenCalories(date,slot);
+   const remainingBefore=t?Math.max(0,t-prior):null;
+
+   const row=document.createElement("div"); row.className="home-meal-row";
+   const options=[
+     `<option value="">${enabled?`Kies ${SLOT_NAMES[slot].toLowerCase()}…`:`Kies eerst ${SLOT_NAMES[slots[idx-1]].toLowerCase()}`}</option>`,
+     ...allowed.map(r=>`<option value="${esc(r.id)}" ${selected?.id===r.id?"selected":""}>${esc(r.name)} — ±${r.kcal} kcal</option>`)
+   ].join("");
+
+   row.innerHTML=`
+     <div class="home-meal-label"><b>${SLOT_NAMES[slot]}</b><span>${remainingBefore!=null?`± ${remainingBefore} kcal beschikbaar vóór deze keuze`:""}</span></div>
+     <select class="home-meal-select" ${enabled?"":"disabled"}>${options}</select>
+     <div class="home-meal-kcal">${selected?.kcal?`± ${selected.kcal} kcal`:"—"}</div>
+     <div class="home-meal-detail">${enabled&&allowed.length===0?"Geen combinatie beschikbaar binnen je huidige dagdoel. Kies een eerdere maaltijd met minder kcal.":selected?`Gekozen: ${esc(selected.name)} · tik op ‘Bekijk recept’ hieronder voor ingrediënten en bereiding.`:""}</div>
+   `;
+   const select=row.querySelector("select");
+   select.onchange=()=>saveHomeMeal(date,slot,select.value);
+   $("todayMeals").appendChild(row);
+
+   if(selected){
+     const detail=document.createElement("button");
+     detail.type="button";detail.className="btn secondary sm";
+     detail.textContent=`Bekijk recept: ${selected.name}`;
+     detail.style.marginTop="4px";
+     detail.onclick=()=>{showRecipe(selected);$("featuredMealImg").src=mealImage(selected,slot);$("featuredRecipe").innerHTML=`<h3>${esc(selected.name)}</h3><b style="color:#00985f">±${selected.kcal||"?"} kcal</b>`+recipeDetails(selected)};
+     row.querySelector(".home-meal-detail").appendChild(document.createElement("br"));
+     row.querySelector(".home-meal-detail").appendChild(detail);
+   }
+ });
+
+ const chosen=homeChosenTotal(date), remaining=t?Math.max(0,t-chosen):0, pct=t?Math.min(100,Math.round(chosen/t*100)):0;
+ $("todayTotal").innerHTML=`<div class="home-budget ${t&&chosen>t?"over":""}">
+   <div class="between"><b>Gekozen dagmenu: ± ${chosen} kcal</b><span>${t?`Nog ± ${remaining} kcal`:""}</span></div>
+   ${t?`<div class="home-budget-bar"><div class="home-budget-fill" style="width:${pct}%"></div></div>`:""}
+   <div class="small muted" style="margin-top:6px">${slots.every(s=>homeChosenRecipe(date,s))?"Je dagmenu is compleet.":"Maak de keuzes van boven naar beneden compleet."}</div>
+ </div>`;
+
+ const eaten=consumedToday(), remainingActual=t?Math.max(0,t-eaten):0, actualPct=t?Math.min(100,Math.round(eaten/t*100)):0;
  $("todayCalorieSummary").innerHTML=t?`<b>🔥 ± ${t} kcal per dag</b><br><span class="small">Geschatte persoonlijke richtlijn</span>`:"Vul je profiel in om je dagdoel te berekenen.";
- $("remainingRingWrap").innerHTML=t?`<div class="flex"><div class="calorie-ring" style="--pct:${pct}%"><span>${eaten}</span></div><div><b>${eaten} / ${t} kcal</b><br><span style="color:#008f5c;font-weight:800">Nog ±${remaining} kcal over</span></div></div>`:"";
+ $("remainingRingWrap").innerHTML=t?`<div class="flex"><div class="calorie-ring" style="--pct:${actualPct}%"><span>${eaten}</span></div><div><b>${eaten} / ${t} kcal</b><br><span style="color:#008f5c;font-weight:800">Nog ±${remainingActual} kcal over</span></div></div>`:"";
  renderActual();renderMix();renderGroceryPreview();
  const ts=sports.filter(s=>s.activity_date===iso());$("todaySports").innerHTML=ts.length?ts.map(s=>`<div class="tiny muted">${esc(s.activity)} ${s.duration_minutes?"• "+s.duration_minutes+" min":""}</div>`).join(""):"";
 }
