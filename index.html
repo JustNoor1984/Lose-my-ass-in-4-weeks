@@ -188,8 +188,15 @@ nav{display:none!important}
 
   <div id="myRecipesPane">
     <div class="card">
+      <h3>Recept van een website importeren</h3>
+      <p class="small muted">Plak een link naar een recept. De app probeert naam, porties, ingrediënten, bereiding, bron en voedingswaarde over te nemen.</p>
+      <div class="flex"><input id="recipeImportUrl" type="url" placeholder="https://..." style="flex:1"><button class="btn secondary" id="importRecipeUrl">Recept ophalen</button></div>
+      <div id="recipeImportStatus" class="small muted" style="margin-top:7px"></div>
+    </div>
+
+    <div class="card">
       <h3>Eigen recept toevoegen</h3>
-      <p class="small muted">Per ingrediënt: hoeveelheid | eenheid | ingrediënt | kcal voor die hoeveelheid</p>
+      <p class="small muted">Je mag ingrediënten gewoon typen zoals: <b>800 gr komkommer</b> of <b>30 ml sojasaus</b>. Als de app een ingrediënt niet kent, kun je nog steeds het oude formaat gebruiken: hoeveelheid | eenheid | ingrediënt | kcal.</p>
       <div class="grid2">
         <label>Naam<input id="recipeName"></label>
         <label>Type<select id="recipeType"><option value="breakfast">Ontbijt</option><option value="lunch">Lunch</option><option value="snack">Tussendoor</option><option value="dinner">Avondeten</option></select></label>
@@ -199,6 +206,11 @@ nav{display:none!important}
         <label>Ingrediënten<textarea id="recipeIngredients" placeholder="150 | g | kipfilet | 165"></textarea></label>
       </div>
       <label>Bereiding, één stap per regel<textarea id="recipeSteps"></textarea></label>
+      <input type="hidden" id="recipeSourceUrl">
+      <input type="hidden" id="recipeSourceName">
+      <input type="hidden" id="recipeSourceKcal">
+      <div id="recipeSourceBox" class="small muted" style="display:none;margin:8px 0"></div>
+      <div id="recipeCalcPreview" class="card info" style="margin:8px 0">Vul ingrediënten in om de calorieën te berekenen.</div>
       <button class="btn" id="addRecipe">Bereken & opslaan</button>
     </div>
     <div class="card">
@@ -330,7 +342,7 @@ function targetCalories(){
 function dayIndexForDate(date){if(!plan.start_date)return null;let d=diff(plan.start_date,date);return d>=0&&d<28?d:null}
 function choiceKey(date,slot){return date+"|"+slot} function mealChoice(date,slot){return mealChoices.find(x=>x.meal_date===date&&x.meal_type===slot)}
 function defaultRecipeId(date,slot){let i=dayIndexForDate(date);if(i==null)return null;const order={breakfast:0,lunch:1,snack:2,dinner:3};return DEFAULTS[Math.floor(i/7)][(i%7)*4+order[slot]]}
-function customToRecipe(r){let ings=Array.isArray(r.ingredients)?r.ingredients:[];return {id:"custom:"+r.id,slot:r.meal_type,name:r.name,kcal:r.calories_total&&r.servings?Math.round(+r.calories_total/+r.servings):null,time:"Eigen recept",ingredients:ings,steps:Array.isArray(r.steps)?r.steps:[],custom:true,dbid:r.id,servings:r.servings||1,image_path:r.image_path||null}}
+function customToRecipe(r){let ings=Array.isArray(r.ingredients)?r.ingredients:[];return {id:"custom:"+r.id,slot:r.meal_type,name:r.name,kcal:r.calories_total&&r.servings?Math.round(+r.calories_total/+r.servings):null,time:"Eigen recept",ingredients:ings,steps:Array.isArray(r.steps)?r.steps:[],custom:true,dbid:r.id,servings:r.servings||1,image_path:r.image_path||null,source_url:r.source_url||null,source_name:r.source_name||null,source_calories_per_serving:r.source_calories_per_serving||null}}
 
 Object.assign(BUILTIN,{"bf_quark_berries_light":{"id":"bf_quark_berries_light","slot":"breakfast","name":"Budget kwarkbowl met appel","kcal":285,"time":"5 min","ingredients":[{"name":"Magere kwark","qty":250,"unit":"g","cat":"Zuivel"},{"name":"Appel","qty":120,"unit":"g","cat":"Groente & fruit"},{"name":"Havermout","qty":20,"unit":"g","cat":"Basis"},{"name":"Kaneel","qty":1,"unit":"tl","cat":"Voorraad"}],"steps":["Doe de kwark in een kom.","Snijd de appel klein en verdeel over de kwark.","Voeg havermout en kaneel toe."],"custom":false},"bf_egg_toast_light":{"id":"bf_egg_toast_light","slot":"breakfast","name":"Ei op volkoren toast met komkommer","kcal":300,"time":"10 min","ingredients":[{"name":"Eieren","qty":2,"unit":"stuks","cat":"Eiwit"},{"name":"Volkorenbrood","qty":1,"unit":"snee","cat":"Basis"},{"name":"Komkommer","qty":150,"unit":"g","cat":"Groente & fruit"}],"steps":["Kook of bak de eieren zonder veel vet.","Rooster het brood.","Serveer met komkommer en kruiden."],"custom":false},"bf_oats_light":{"id":"bf_oats_light","slot":"breakfast","name":"Lichte appel-havermout","kcal":315,"time":"8 min","ingredients":[{"name":"Havermout","qty":40,"unit":"g","cat":"Basis"},{"name":"Halfvolle melk","qty":150,"unit":"ml","cat":"Zuivel"},{"name":"Water","qty":100,"unit":"ml","cat":"Voorraad"},{"name":"Appel","qty":120,"unit":"g","cat":"Groente & fruit"},{"name":"Kaneel","qty":1,"unit":"tl","cat":"Voorraad"}],"steps":["Verwarm havermout met melk en water.","Roer regelmatig tot het romig is.","Voeg appel en kaneel toe."],"custom":false},"lu_lentil_soup":{"id":"lu_lentil_soup","slot":"lunch","name":"Rode-linzensoep met wortel","kcal":295,"time":"25 min","ingredients":[{"name":"Rode linzen droog","qty":50,"unit":"g","cat":"Eiwit"},{"name":"Wortel","qty":150,"unit":"g","cat":"Groente & fruit"},{"name":"Ui","qty":75,"unit":"g","cat":"Groente & fruit"},{"name":"Bouillon","qty":400,"unit":"ml","cat":"Voorraad"},{"name":"Komijn","qty":1,"unit":"tl","cat":"Voorraad"}],"steps":["Fruit de ui kort met een scheutje water of minimale olie.","Voeg wortel, linzen, bouillon en komijn toe.","Laat ongeveer 20 minuten zacht koken tot de linzen gaar zijn.","Pureer geheel of gedeeltelijk."],"custom":false,"source_name":"BBC Good Food – low-calorie soup inspiration","source_url":"https://www.bbcgoodfood.com/recipes/collection/low-calorie-soup-recipes"},"lu_chickpea_wrap":{"id":"lu_chickpea_wrap","slot":"lunch","name":"Kikkererwten-komkommerwrap","kcal":340,"time":"10 min","ingredients":[{"name":"Volkoren wrap","qty":1,"unit":"stuk","cat":"Basis"},{"name":"Kikkererwten uitgelekt","qty":100,"unit":"g","cat":"Eiwit"},{"name":"Komkommer","qty":120,"unit":"g","cat":"Groente & fruit"},{"name":"Wortel","qty":75,"unit":"g","cat":"Groente & fruit"},{"name":"Magere kwark","qty":40,"unit":"g","cat":"Zuivel"}],"steps":["Prak de kikkererwten grof met peper, paprikapoeder en wat kwark.","Vul de wrap met kikkererwten, komkommer en geraspte wortel.","Rol stevig op."],"custom":false,"source_name":"BBC Good Food – cheap lunch ideas","source_url":"https://www.bbcgoodfood.com/budget/cheap-lunch-ideas"},"lu_veg_omelette":{"id":"lu_veg_omelette","slot":"lunch","name":"Groente-omelet met één boterham","kcal":325,"time":"12 min","ingredients":[{"name":"Eieren","qty":2,"unit":"stuks","cat":"Eiwit"},{"name":"Diepvries spinazie","qty":100,"unit":"g","cat":"Groente & fruit"},{"name":"Champignons","qty":100,"unit":"g","cat":"Groente & fruit"},{"name":"Volkorenbrood","qty":1,"unit":"snee","cat":"Basis"}],"steps":["Bak champignons en spinazie in een goede antiaanbakpan.","Klop de eieren los en giet erbij.","Laat rustig stollen en serveer met het brood."],"custom":false},"sn_carrot_quarkdip":{"id":"sn_carrot_quarkdip","slot":"snack","name":"Wortel met kruidige kwarkdip","kcal":115,"time":"5 min","ingredients":[{"name":"Wortel","qty":150,"unit":"g","cat":"Groente & fruit"},{"name":"Magere kwark","qty":100,"unit":"g","cat":"Zuivel"},{"name":"Kruiden","qty":1,"unit":"tl","cat":"Voorraad"}],"steps":["Snijd de wortel in repen.","Meng de kwark met peper, knoflookpoeder of tuinkruiden.","Gebruik de kwark als dip."],"custom":false},"sn_apple_quark_light":{"id":"sn_apple_quark_light","slot":"snack","name":"Appel met kaneelkwark","kcal":135,"time":"3 min","ingredients":[{"name":"Appel","qty":120,"unit":"g","cat":"Groente & fruit"},{"name":"Magere kwark","qty":125,"unit":"g","cat":"Zuivel"},{"name":"Kaneel","qty":1,"unit":"tl","cat":"Voorraad"}],"steps":["Snijd de appel klein.","Meng met de kwark en kaneel."],"custom":false},"sn_popcorn":{"id":"sn_popcorn","slot":"snack","name":"Zelfgepofte popcorn","kcal":105,"time":"5 min","ingredients":[{"name":"Popcornmais","qty":25,"unit":"g","cat":"Basis"}],"steps":["Pof de mais in een pan met deksel of geschikte popcornmaker.","Breng op smaak met een klein beetje zout of paprikapoeder; voeg geen boter toe."],"custom":false},"di_minestrone_light":{"id":"di_minestrone_light","slot":"dinner","name":"Budget minestrone met bonen","kcal":360,"time":"35 min","ingredients":[{"name":"Cannellinibonen uitgelekt","qty":120,"unit":"g","cat":"Eiwit"},{"name":"Kleine pasta","qty":35,"unit":"g","cat":"Basis"},{"name":"Wortel","qty":100,"unit":"g","cat":"Groente & fruit"},{"name":"Courgette","qty":150,"unit":"g","cat":"Groente & fruit"},{"name":"Ui","qty":75,"unit":"g","cat":"Groente & fruit"},{"name":"Tomatenblokjes uit blik","qty":200,"unit":"g","cat":"Groente & fruit"},{"name":"Bouillon","qty":350,"unit":"ml","cat":"Voorraad"}],"steps":["Snijd de groenten klein en laat ze enkele minuten zacht worden in de pan.","Voeg tomaten, bouillon en bonen toe en laat ongeveer 15 minuten koken.","Voeg pasta toe en kook tot die gaar is.","Breng op smaak met Italiaanse kruiden."],"custom":false,"source_name":"BBC Good Food – Classic minestrone soup","source_url":"https://www.bbcgoodfood.com/recipes/classic-minestrone-soup"},"di_chicken_noodle_light":{"id":"di_chicken_noodle_light","slot":"dinner","name":"Lichte kip-noedelsoep","kcal":335,"time":"30 min","ingredients":[{"name":"Kipfilet","qty":100,"unit":"g","cat":"Eiwit"},{"name":"Noedels","qty":40,"unit":"g","cat":"Basis"},{"name":"Wortel","qty":100,"unit":"g","cat":"Groente & fruit"},{"name":"Ui","qty":75,"unit":"g","cat":"Groente & fruit"},{"name":"Diepvriesgroente","qty":150,"unit":"g","cat":"Groente & fruit"},{"name":"Kippenbouillon","qty":450,"unit":"ml","cat":"Voorraad"}],"steps":["Laat kip, ui en wortel rustig garen in de bouillon.","Haal de kip eruit, trek in stukjes en doe terug in de pan.","Voeg noedels en extra groente toe en kook tot alles gaar is."],"custom":false,"source_name":"Budget Bytes – Chicken Noodle Soup","source_url":"https://www.budgetbytes.com/chicken-noodle-soup/"},"di_chicken_ramen_light":{"id":"di_chicken_ramen_light","slot":"dinner","name":"Budget kip-groente ramen","kcal":385,"time":"25 min","ingredients":[{"name":"Kipfilet","qty":100,"unit":"g","cat":"Eiwit"},{"name":"Noedels","qty":45,"unit":"g","cat":"Basis"},{"name":"Champignons","qty":100,"unit":"g","cat":"Groente & fruit"},{"name":"Paprika","qty":100,"unit":"g","cat":"Groente & fruit"},{"name":"Ui","qty":50,"unit":"g","cat":"Groente & fruit"},{"name":"Bouillon","qty":400,"unit":"ml","cat":"Voorraad"},{"name":"Sojasaus","qty":2,"unit":"tl","cat":"Voorraad"}],"steps":["Laat ui, champignons en paprika zacht koken in de bouillon.","Voeg dun gesneden kip toe en laat volledig gaar worden.","Kook de noedels mee volgens de verpakking.","Breng op smaak met sojasaus, gember of chilivlokken."],"custom":false,"source_name":"Budget Bytes – Chicken and Vegetables Ramen","source_url":"https://www.budgetbytes.com/slow-cooker-chicken-and-vegetables-ramen/"},"di_chickpea_soup":{"id":"di_chickpea_soup","slot":"dinner","name":"Marokkaanse kikkererwtensoep","kcal":390,"time":"25 min","ingredients":[{"name":"Kikkererwten uitgelekt","qty":150,"unit":"g","cat":"Eiwit"},{"name":"Wortel","qty":120,"unit":"g","cat":"Groente & fruit"},{"name":"Ui","qty":75,"unit":"g","cat":"Groente & fruit"},{"name":"Tomatenblokjes uit blik","qty":200,"unit":"g","cat":"Groente & fruit"},{"name":"Bouillon","qty":300,"unit":"ml","cat":"Voorraad"},{"name":"Komijn/paprika","qty":2,"unit":"tl","cat":"Voorraad"}],"steps":["Fruit de ui kort met weinig of geen olie.","Voeg wortel, kruiden, tomaat, kikkererwten en bouillon toe.","Laat ongeveer 20 minuten zacht koken.","Prak een deel van de kikkererwten voor een iets dikkere soep."],"custom":false,"source_name":"BBC Good Food – budget soup collection","source_url":"https://www.bbcgoodfood.com/recipes/collection/budget-soup-recipes"},"di_orzo_soup":{"id":"di_orzo_soup","slot":"dinner","name":"Orzo-bouillonsoep met kip en groente","kcal":350,"time":"20 min","ingredients":[{"name":"Orzo","qty":45,"unit":"g","cat":"Basis"},{"name":"Kipfilet","qty":80,"unit":"g","cat":"Eiwit"},{"name":"Wortel","qty":100,"unit":"g","cat":"Groente & fruit"},{"name":"Diepvrieserwten","qty":75,"unit":"g","cat":"Groente & fruit"},{"name":"Kippenbouillon","qty":450,"unit":"ml","cat":"Voorraad"}],"steps":["Breng de bouillon aan de kook met wortel en kleine stukjes kip.","Voeg de orzo toe en kook rustig gaar.","Voeg de erwten de laatste minuten toe en controleer of de kip volledig gaar is."],"custom":false,"source_name":"BBC Good Food – Shorbet lesan asfour inspiration","source_url":"https://www.bbcgoodfood.com/recipes/shorbet-lesan-asfour-orzo-pasta-soup"}});
 
@@ -558,7 +570,7 @@ async function loadCommunityRecipes(){
    id:"community:"+r.recipe_id, dbid:r.recipe_id, name:r.recipe_name, slot:r.meal_type,
    ingredients:r.ingredients||[], steps:r.steps||[], servings:r.servings||1,
    kcal:r.calories_total&&r.servings?Math.round(+r.calories_total/+r.servings):null,
-   share_code:r.share_code, image_path:r.image_path||null, custom:true, community:true
+   share_code:r.share_code, image_path:r.image_path||null, source_url:r.source_url||null, source_name:r.source_name||null, source_calories_per_serving:r.source_calories_per_serving||null, custom:true, community:true
  }));
 }
 function setRecipeTab(tab){
@@ -691,45 +703,203 @@ async function confirmScheduleRecipe(){
  mealChoices=mealChoices.filter(x=>!(x.meal_date===date&&x.meal_type===slot));mealChoices.push(res.data);
  closeModal("scheduleRecipeModal");closeModal("recipeModal");renderWeek();renderToday();renderShopping();toast("Toegevoegd aan weekmenu");
 }
-function parseIngredients(text){let items=[];for(const line of text.split("\n").map(x=>x.trim()).filter(Boolean)){let p=line.split("|").map(x=>x.trim());if(p.length<4)throw new Error("Gebruik per regel: hoeveelheid | eenheid | ingrediënt | kcal");let qty=parseFloat(p[0].replace(",",".")),kcal=parseFloat(p[3].replace(",","."));if(!qty||isNaN(kcal))throw new Error("Hoeveelheid of kcal is ongeldig");items.push({qty,unit:p[1],name:p[2],kcal,cat:"Eigen recept"})}return items}
-async function addRecipe(){try{let name=$("recipeName").value.trim(),servings=+$("recipeServings").value||1,ings=parseIngredients($("recipeIngredients").value),steps=$("recipeSteps").value.split("\n").map(x=>x.trim()).filter(Boolean);if(!name||!steps.length)throw new Error("Vul naam en bereiding in");let total=ings.reduce((s,x)=>s+x.kcal,0),res=await sb.from("recipes").insert({user_id:user.id,name,meal_type:$("recipeType").value,ingredients:ings,steps,servings,calories_total:total}).select().single();if(res.error)throw res.error;ownRecipes.push(res.data);["recipeName","recipeIngredients","recipeSteps"].forEach(id=>$(id).value="");renderRecipes();toast(`Opgeslagen • ± ${Math.round(total/servings)} kcal/portie`)}catch(e){toast(e.message||"Opslaan lukte niet")}}
-function recipeSearchText(r){
- const ing=(r.ingredients||[]).map(x=>typeof x==="string"?x:(x.name||"")).join(" ");
- return `${r.name||""} ${ing}`.toLowerCase();
+
+const FOOD_KCAL = [
+ {keys:["komkommer","komkommers"],basis:"g",k:15},
+ {keys:["knoflook"],basis:"g",k:149},
+ {keys:["sojasaus","soy sauce"],basis:"ml",k:53},
+ {keys:["rijstazijn","rice vinegar"],basis:"ml",k:18},
+ {keys:["sesamolie","sesam olie","sesame oil"],basis:"ml",k:810},
+ {keys:["honing","honey"],basis:"g",k:304},
+ {keys:["chili-olie","chili olie","chili oil"],basis:"ml",k:810},
+ {keys:["sesamzaad","sesamzaadjes","sesam"],basis:"g",k:573},
+ {keys:["zout"],basis:"g",k:0},
+ {keys:["bosui","bosuitjes","lente-ui","lente ui"],basis:"g",k:32},
+ {keys:["koriander","verse koriander"],basis:"g",k:23},
+ {keys:["limoensap","limoen sap"],basis:"ml",k:25},
+ {keys:["citroensap"],basis:"ml",k:22},
+ {keys:["olijfolie"],basis:"ml",k:810},
+ {keys:["zonnebloemolie"],basis:"ml",k:810},
+ {keys:["appel","appels"],basis:"g",k:52},
+ {keys:["wortel","wortels"],basis:"g",k:41},
+ {keys:["ui","uien","rode ui"],basis:"g",k:40},
+ {keys:["paprika"],basis:"g",k:31},
+ {keys:["courgette"],basis:"g",k:17},
+ {keys:["champignon","champignons"],basis:"g",k:22},
+ {keys:["spinazie"],basis:"g",k:23},
+ {keys:["bloemkool","bloemkoolrijst"],basis:"g",k:25},
+ {keys:["paksoi"],basis:"g",k:13},
+ {keys:["prei"],basis:"g",k:61},
+ {keys:["tomaat","tomaten","tomatenblokjes"],basis:"g",k:18},
+ {keys:["radijs","radijsjes"],basis:"g",k:16},
+ {keys:["ijsbergsla","sla","gemengde sla"],basis:"g",k:14},
+ {keys:["avocado"],basis:"g",k:160},
+ {keys:["aardappel","aardappelen"],basis:"g",k:77},
+ {keys:["kipfilet","kip"],basis:"g",k:165},
+ {keys:["rundertartaar","tartaar"],basis:"g",k:137},
+ {keys:["zalm","zalmfilet"],basis:"g",k:208},
+ {keys:["garnalen"],basis:"g",k:99},
+ {keys:["rauwe ham"],basis:"g",k:250},
+ {keys:["ei","eieren"],basis:"piece",piece:72},
+ {keys:["magere kwark","kwark"],basis:"g",k:60},
+ {keys:["griekse yoghurt 0%","griekse yoghurt"],basis:"g",k:59},
+ {keys:["halfvolle melk"],basis:"ml",k:47},
+ {keys:["geitenkaas"],basis:"g",k:364},
+ {keys:["parmezaanse kaas","parmezaan"],basis:"g",k:431},
+ {keys:["havermout"],basis:"g",k:372},
+ {keys:["quinoa"],basis:"g",k:368},
+ {keys:["rijst"],basis:"g",k:360},
+ {keys:["pasta","spaghetti","orzo","noedels"],basis:"g",k:350},
+ {keys:["rode linzen","linzen"],basis:"g",k:352},
+ {keys:["kikkererwten"],basis:"g",k:164},
+ {keys:["cannellinibonen","bonen"],basis:"g",k:110},
+ {keys:["popcornmais"],basis:"g",k:375},
+ {keys:["volkorenbrood","brood"],basis:"piece",piece:82},
+ {keys:["volkoren wrap","wrap"],basis:"piece",piece:180},
+ {keys:["mayonaise"],basis:"g",k:680},
+ {keys:["mosterd","grove mosterd"],basis:"g",k:66},
+ {keys:["rozijnen"],basis:"g",k:299}
+];
+function cleanIngredientName(s){
+ return String(s||"").toLowerCase()
+   .replace(/\([^)]*\)/g," ")
+   .replace(/\b(fijngehakt|fijngesneden|gesneden|in ringetjes|vers|verse|naar smaak)\b/g," ")
+   .replace(/[,:;]/g," ").replace(/\s+/g," ").trim();
 }
-function currentRecipeFilters(){
- return {
-   type:$("recipeFilterType")?.value||"all",
-   kcal:+($("recipeFilterKcal")?.value||0),
-   search:($("recipeFilterSearch")?.value||"").trim().toLowerCase(),
-   origin:$("recipeFilterOrigin")?.value||"all"
- };
+function findFood(name){
+ const n=cleanIngredientName(name);
+ let best=null,bestLen=0;
+ for(const f of FOOD_KCAL)for(const key of f.keys){
+   if(n.includes(key) && key.length>bestLen){best=f;bestLen=key.length}
+ }
+ return best;
 }
-function recipeMatchesFilters(r,origin,f){
- if(f.type!=="all" && r.slot!==f.type)return false;
- if(f.kcal && (+r.kcal||99999)>f.kcal)return false;
- if(f.search && !recipeSearchText(r).includes(f.search))return false;
- if(f.origin==="standard" && origin!=="builtin")return false;
- if(f.origin==="mine" && origin!=="mine")return false;
- if(f.origin==="source" && !r.source_url)return false;
- return true;
+function unitToBase(qty,unit,food){
+ const u=String(unit||"").toLowerCase().replace(".","");
+ if(food.basis==="piece"){
+   if(["stuk","stuks","st","ei","eieren","snee","sneetje","wrap"].includes(u))return {amount:qty,kind:"piece"};
+   return null;
+ }
+ if(food.basis==="g"){
+   if(["g","gr","gram"].includes(u))return {amount:qty,kind:"g"};
+   if(u==="kg")return {amount:qty*1000,kind:"g"};
+   // spoons are an approximation for solids
+   if(["tl","theelepel","theelepels"].includes(u))return {amount:qty*5,kind:"g"};
+   if(["el","eetlepel","eetlepels"].includes(u))return {amount:qty*15,kind:"g"};
+ }
+ if(food.basis==="ml"){
+   if(u==="ml")return {amount:qty,kind:"ml"};
+   if(u==="cl")return {amount:qty*10,kind:"ml"};
+   if(u==="dl")return {amount:qty*100,kind:"ml"};
+   if(u==="l")return {amount:qty*1000,kind:"ml"};
+   if(["tl","theelepel","theelepels"].includes(u))return {amount:qty*5,kind:"ml"};
+   if(["el","eetlepel","eetlepels"].includes(u))return {amount:qty*15,kind:"ml"};
+ }
+ return null;
 }
-async function renderRecipes(){
- const host=$("recipeList"); if(!host)return; host.innerHTML="";
- const f=currentRecipeFilters(), items=[];
- Object.values(BUILTIN).forEach(r=>{if(recipeMatchesFilters(r,"builtin",f))items.push({r,origin:"builtin"})});
- ownRecipes.forEach(db=>{const r=customToRecipe(db);if(recipeMatchesFilters(r,"mine",f))items.push({r,origin:"mine"})});
- $("recipeFilterCount").textContent=`${items.length} recept${items.length===1?"":"en"} gevonden`;
- if(!items.length){host.innerHTML='<div class="card muted">Geen recepten gevonden met deze filters.</div>';return}
- const grid=document.createElement("div");grid.className="recipe-grid";host.appendChild(grid);
- for(const item of items){
-   const r=item.r, el=await recipeTile(r,item.origin);
-   if(item.origin==="mine"){
-     const body=el.querySelector(".recipe-actions");
-     const share=document.createElement("button");share.className="btn sm";share.textContent="Deel";share.onclick=()=>shareRecipe(r.dbid);body.appendChild(share);
-     const del=document.createElement("button");del.className="btn danger sm";del.textContent="Wis";del.onclick=()=>deleteRecipe(r.dbid);body.appendChild(del);
+function parseNaturalIngredient(line){
+ const raw=line.trim();
+ const m=raw.match(/^(\d+(?:[.,]\d+)?)\s*(kg|g|gr|gram|ml|cl|dl|l|tl|theelepels?|el|eetlepels?|stuks?|stuk|st|eieren?|snee(?:tje)?|wrap)\s+(.+)$/i);
+ if(!m)return {error:`"${raw}" — begin met hoeveelheid + eenheid, bv. 30 ml sojasaus`};
+ const qty=parseFloat(m[1].replace(",", ".")), unit=m[2], name=m[3].trim();
+ const food=findFood(name);
+ if(!food)return {error:`"${name}" staat nog niet in de calorie-database`};
+ const base=unitToBase(qty,unit,food);
+ if(!base)return {error:`Eenheid "${unit}" past niet bij "${name}"`};
+ const kcal=food.basis==="piece" ? qty*food.piece : base.amount*food.k/100;
+ return {item:{qty,unit,name,kcal:+kcal.toFixed(1),cat:"Eigen recept",estimated:true}};
+}
+function parseIngredientsDetailed(text){
+ let items=[],errors=[];
+ for(const line of text.split("\n").map(x=>x.trim()).filter(Boolean)){
+   if(line.includes("|")){
+     const p=line.split("|").map(x=>x.trim());
+     if(p.length<4){errors.push(`"${line}" — gebruik hoeveelheid | eenheid | ingrediënt | kcal`);continue}
+     const qty=parseFloat(p[0].replace(",",".")),kcal=parseFloat(p[3].replace(",","."));
+     if(!qty||isNaN(kcal)){errors.push(`"${line}" — hoeveelheid of kcal is ongeldig`);continue}
+     items.push({qty,unit:p[1],name:p[2],kcal,cat:"Eigen recept",estimated:false});
+   }else{
+     const r=parseNaturalIngredient(line);
+     if(r.error)errors.push(r.error); else items.push(r.item);
    }
-   grid.appendChild(el);
+ }
+ return {items,errors};
+}
+function parseIngredients(text){
+ const r=parseIngredientsDetailed(text);
+ if(r.errors.length)throw new Error("Kan nog niet alles berekenen: "+r.errors.join(" • "));
+ return r.items;
+}
+function updateRecipeCalcPreview(){
+ const box=$("recipeCalcPreview"); if(!box)return;
+ const text=$("recipeIngredients").value, servings=+$("recipeServings").value||1;
+ const r=parseIngredientsDetailed(text);
+ if(!text.trim()){box.innerHTML="Vul ingrediënten in om de calorieën te berekenen.";return}
+ const total=r.items.reduce((s,x)=>s+(+x.kcal||0),0);
+ const sourceKcal=+($("recipeSourceKcal").value||0);
+ let msg=`<b>Berekend uit ingrediënten:</b> ± ${Math.round(total)} kcal totaal • ± ${Math.round(total/servings)} kcal per portie`;
+ if(sourceKcal)msg+=`<br><b>Voedingswaarde van de bron:</b> ± ${Math.round(sourceKcal)} kcal per portie — deze waarde krijgt voorrang bij opslaan.`;
+ if(r.errors.length)msg+=`<br><span style="color:#a62929"><b>Nog niet herkend:</b> ${r.errors.map(esc).join("<br>")}</span>`;
+ else msg+=`<br><span style="color:#087b54">✓ Alle ingrediënten herkend.</span>`;
+ box.innerHTML=msg;
+}
+async function addRecipe(){
+ try{
+   let name=$("recipeName").value.trim(),servings=+$("recipeServings").value||1,
+       ings=parseIngredients($("recipeIngredients").value),
+       steps=$("recipeSteps").value.split("\n").map(x=>x.trim()).filter(Boolean);
+   if(!name||!steps.length)throw new Error("Vul naam en bereiding in");
+   const calculated=ings.reduce((s,x)=>s+x.kcal,0);
+   const sourcePerServing=+($("recipeSourceKcal").value||0);
+   const total=sourcePerServing?sourcePerServing*servings:calculated;
+   let payload={
+     user_id:user.id,name,meal_type:$("recipeType").value,ingredients:ings,steps,servings,
+     calories_total:total,
+     source_url:$("recipeSourceUrl").value||null,
+     source_name:$("recipeSourceName").value||null,
+     source_calories_per_serving:sourcePerServing||null
+   };
+   let res=await sb.from("recipes").insert(payload).select().single();
+   if(res.error)throw res.error;
+   ownRecipes.push(res.data);
+   ["recipeName","recipeIngredients","recipeSteps","recipeSourceUrl","recipeSourceName","recipeSourceKcal","recipeImportUrl"].forEach(id=>{if($(id))$(id).value=""});
+   $("recipeSourceBox").style.display="none"; $("recipeImportStatus").textContent="";
+   updateRecipeCalcPreview();renderRecipes();
+   toast(`Opgeslagen • ± ${Math.round(total/servings)} kcal/portie`);
+ }catch(e){toast(e.message||"Opslaan lukte niet")}
+}
+async function importRecipeFromUrl(){
+ const url=$("recipeImportUrl").value.trim();
+ if(!/^https?:\/\//i.test(url))return toast("Plak een volledige http(s)-link");
+ $("recipeImportStatus").textContent="Recept ophalen…";
+ try{
+   const {data:{session}}=await sb.auth.getSession();
+   if(!session)throw new Error("Log opnieuw in");
+   const resp=await fetch(`${SUPABASE_URL}/functions/v1/import-recipe`,{
+     method:"POST",
+     headers:{
+       "Content-Type":"application/json",
+       "apikey":SUPABASE_KEY,
+       "Authorization":`Bearer ${session.access_token}`
+     },
+     body:JSON.stringify({url})
+   });
+   const data=await resp.json();
+   if(!resp.ok)throw new Error(data.error||"Recept ophalen lukte niet");
+   $("recipeName").value=data.name||"";
+   $("recipeServings").value=data.servings||1;
+   $("recipeIngredients").value=(data.ingredients||[]).join("\n");
+   $("recipeSteps").value=(data.steps||[]).join("\n");
+   $("recipeSourceUrl").value=data.sourceUrl||url;
+   $("recipeSourceName").value=data.sourceName||new URL(url).hostname;
+   $("recipeSourceKcal").value=data.caloriesPerServing||"";
+   $("recipeSourceBox").style.display="block";
+   $("recipeSourceBox").innerHTML=`Bron: <a href="${esc(data.sourceUrl||url)}" target="_blank" rel="noopener noreferrer">${esc(data.sourceName||new URL(url).hostname)}</a>${data.caloriesPerServing?` • ${Math.round(data.caloriesPerServing)} kcal per portie volgens bron`:""}`;
+   $("recipeImportStatus").textContent=data.caloriesPerServing?"Recept opgehaald. Controleer alles en sla op.":"Recept opgehaald. Calorieën worden uit de ingrediënten geschat.";
+   updateRecipeCalcPreview();
+ }catch(e){
+   $("recipeImportStatus").textContent=e.message||"Recept ophalen lukte niet";
+   toast(e.message||"Recept ophalen lukte niet");
  }
 }
 async function shareRecipe(id){let {data,error}=await sb.rpc("share_recipe",{p_recipe_id:id});if(error)return toast("Delen lukte niet");$("shareCode").textContent=data;openModal("shareModal")}
@@ -818,7 +988,10 @@ function renderAll(){renderEstimate();renderToday();renderWeek();renderGuide();r
 function setView(v){document.querySelectorAll(".view").forEach(x=>x.classList.toggle("active",x.id===v));document.querySelectorAll("#topNav button").forEach(x=>x.classList.toggle("active",x.dataset.view===v));window.scrollTo({top:0,behavior:"smooth"})}
 document.querySelectorAll("#topNav button").forEach(b=>b.onclick=()=>setView(b.dataset.view));$("profileShortcut").onclick=()=>setView("settings");
 document.querySelectorAll("#trainingTabs button").forEach(b=>b.onclick=()=>{training=b.dataset.training;renderGuide()});
-$("shoppingWeek").onchange=renderShopping;$("saveProfile").onclick=saveProfile;$("addRecipe").onclick=addRecipe;$("importRecipe").onclick=importRecipe;$("addSport").onclick=addSport;$("addMeasurement").onclick=addMeasurement;
+$("shoppingWeek").onchange=renderShopping;$("saveProfile").onclick=saveProfile;$("addRecipe").onclick=addRecipe;
+$("importRecipeUrl").onclick=importRecipeFromUrl;
+$("recipeIngredients").addEventListener("input",updateRecipeCalcPreview);
+$("recipeServings").addEventListener("input",updateRecipeCalcPreview);$("importRecipe").onclick=importRecipe;$("addSport").onclick=addSport;$("addMeasurement").onclick=addMeasurement;
 document.querySelectorAll("#recipeTabs button").forEach(b=>b.onclick=()=>setRecipeTab(b.dataset.rtab));
 
 ["recipeFilterType","recipeFilterKcal","recipeFilterOrigin"].forEach(id=>$(id)&&($(id).onchange=renderRecipes));
