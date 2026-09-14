@@ -428,14 +428,56 @@ async function showRecipe(r, opts={}){
  if(r.custom)$("modalPhotoBtn").onclick=()=>openPhotoUpload(r.dbid);
  openModal("recipeModal");
 }
-async function load(){
- const [p,pl,st,sp,me,rc,mc,fl]=await Promise.all([
-  sb.from("profiles").select("*").eq("id",user.id).maybeSingle(),sb.from("user_plans").select("*").eq("user_id",user.id).maybeSingle(),sb.from("app_state").select("*").eq("user_id",user.id).maybeSingle(),
-  sb.from("sports").select("*").eq("user_id",user.id).order("activity_date"),sb.from("measurements").select("*").eq("user_id",user.id).order("measured_on"),sb.from("recipes").select("*").eq("user_id",user.id).order("created_at"),sb.from("meal_choices").select("*").eq("user_id",user.id).order("meal_date")
+async function withTimeout(promise, ms=8000){
+ return Promise.race([
+  promise,
+  new Promise((_,reject)=>setTimeout(()=>reject(new Error("timeout")),ms))
  ]);
- profile=p.data||{};plan=pl.data||{};state=st.data?.data||{};sports=sp.data||[];measurements=me.data||[];ownRecipes=rc.data||[];mealChoices=mc.data||[];foodLog=fl?.data||[];
- await loadCommunityRecipes();
- $("accountName").textContent=profile.display_name||user.email.split("@")[0];$("accountEmail").textContent=user.email;fillSettings();renderAll();
+}
+async function load(){
+ try{
+  const results=await Promise.allSettled([
+   withTimeout(sb.from("profiles").select("*").eq("id",user.id).maybeSingle()),
+   withTimeout(sb.from("user_plans").select("*").eq("user_id",user.id).maybeSingle()),
+   withTimeout(sb.from("app_state").select("*").eq("user_id",user.id).maybeSingle()),
+   withTimeout(sb.from("sports").select("*").eq("user_id",user.id).order("activity_date")),
+   withTimeout(sb.from("measurements").select("*").eq("user_id",user.id).order("measured_on")),
+   withTimeout(sb.from("recipes").select("*").eq("user_id",user.id).order("created_at")),
+   withTimeout(sb.from("meal_choices").select("*").eq("user_id",user.id).order("meal_date")),
+   withTimeout(sb.from("food_log").select("*").eq("user_id",user.id).order("eaten_at"))
+  ]);
+
+  const val=i=>results[i]?.status==="fulfilled" ? results[i].value : {data:null,error:results[i]?.reason};
+  const p=val(0),pl=val(1),st=val(2),sp=val(3),me=val(4),rc=val(5),mc=val(6),fl=val(7);
+
+  profile=p.data||{};
+  plan=pl.data||{};
+  state=st.data?.data||{};
+  sports=sp.data||[];
+  measurements=me.data||[];
+  ownRecipes=rc.data||[];
+  mealChoices=mc.data||[];
+  foodLog=fl.data||[];
+
+  // Community recepten zijn optioneel: de app mag hier nooit op vastlopen.
+  try{ await withTimeout(loadCommunityRecipes(),5000); }
+  catch(e){ console.warn("Community recipes skipped",e); communityRecipes=[]; }
+
+  $("accountName").textContent=profile.display_name||user.email.split("@")[0];
+  $("accountEmail").textContent=user.email;
+  fillSettings();
+  renderAll();
+ }catch(e){
+  console.error("Load error",e);
+  $("authGate").style.display="none";
+  $("appShell").style.display="block";
+  try{
+   $("accountName").textContent=user?.email?.split("@")[0]||"Account";
+   $("accountEmail").textContent=user?.email||"";
+   renderAll();
+  }catch(_){}
+  toast("De app kon niet alles laden, maar je bent wel ingelogd.");
+ }
 }
 function fillSettings(){$("age").value=profile.age_years??"";$("sex").value=profile.sex??"";$("height").value=profile.height_cm??"";$("profileWeight").value=profile.weight_kg??measurements.at(-1)?.weight_kg??"";$("activity").value=profile.activity_level||"light";$("startDate").value=plan.start_date||"";$("goalWeight").value=plan.goal_weight_kg??"";renderEstimate()}
 function renderEstimate(){const t=targetCalories();$("calorieEstimate").innerHTML=profile.age_years&&+profile.age_years<18?`<b>Geen automatisch afvaldoel.</b><br><span class="small">Voor gebruikers onder 18 berekent de app bewust geen caloriebeperking.</span>`:t?`<b>Geschat dagdoel: ± ${t} kcal</b><br><span class="small">Dit is een praktische schatting, geen medisch advies.</span>`:`Vul leeftijd, geslacht, lengte en gewicht in om een schatting te krijgen.`}
@@ -1048,7 +1090,21 @@ if($("clearRecipeFilters"))$("clearRecipeFilters").onclick=()=>{
 $("uploadRecipePhoto").onclick=uploadRecipePhoto;
 $("confirmScheduleRecipe").onclick=confirmScheduleRecipe;$("ateDifferent").onclick=()=>openModal("differentModal");$("quickDifferent").onclick=()=>openModal("differentModal");$("saveDifferent").onclick=saveDifferentMeal;$("logout").onclick=()=>sb.auth.signOut();
 
-async function showSession(session){if(!session){$("authGate").style.display="block";$("appShell").style.display="none";user=null;return}user=session.user;$("authGate").style.display="none";$("appShell").style.display="block";await load()}
+async function showSession(session){
+ if(!session){
+  $("authGate").style.display="block";
+  $("appShell").style.display="none";
+  user=null;
+  return;
+ }
+ user=session.user;
+ $("authGate").style.display="none";
+ $("appShell").style.display="block";
+ load().catch(e=>{
+  console.error("Background load failed",e);
+  toast("Ingelogd, maar niet alle gegevens konden worden geladen.");
+ });
+}
 sb.auth.onAuthStateChange((_e,s)=>showSession(s).catch(e=>console.error("Session render error",e)));
 sb.auth.getSession()
  .then(r=>showSession(r.data.session))
