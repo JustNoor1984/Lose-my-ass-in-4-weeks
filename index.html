@@ -154,13 +154,13 @@ nav{display:none!important}
           <div><h1>Mijn 4-weken App</h1><div class="tiny muted">Gezonder. Sterker. Jij.</div></div>
         </div>
         <div class="topnav" id="topNav">
-          <button data-view="today" class="active">⌂<span>Home</span></button>
-          <button data-view="week">🍴<span>Voeding</span></button>
-          <button data-view="sport">🏋<span>Sport</span></button>
-          <button data-view="week">▣<span>Planning</span></button>
-          <button data-view="shopping">🛒<span>Boodschappen</span></button>
-          <button data-view="recipes">🍲<span>Recepten</span></button>
-          <button data-view="settings">👤<span>Profiel</span></button>
+          <button data-view="today" data-nav="home" class="active">⌂<span>Home</span></button>
+          <button data-view="week" data-nav="food">🍴<span>Voeding</span></button>
+          <button data-view="sport" data-nav="sport">🏋<span>Sport</span></button>
+          <button data-view="week" data-nav="planning">▣<span>Planning</span></button>
+          <button data-view="shopping" data-nav="shopping">🛒<span>Boodschappen</span></button>
+          <button data-view="recipes" data-nav="recipes">🍲<span>Recepten</span></button>
+          <button data-view="settings" data-nav="settings">👤<span>Profiel</span></button>
         </div>
         <button class="btn secondary sm" id="profileShortcut">👤 Hallo <span id="accountName">Ik</span></button>
       </div>
@@ -168,20 +168,57 @@ nav{display:none!important}
 <main>
 <section id="today" class="view active">
 <div class="v6-dashboard">
- <div class="card"><h2 class="v6-card-title"><span class="stepno">1.</span>Kies je maaltijden</h2><p class="small muted">Je dag is automatisch samengesteld uit je doorlopende weekmenu. Nieuwe eigen, geïmporteerde of gedeelde recepten kunnen automatisch in toekomstige dagen rouleren. Via de dropdowns kun je altijd zelf wisselen.</p><div class="between"><span class="badge" id="planBadge">Startdatum</span><span class="badge" id="calorieBadge">Caloriedoel</span></div><div id="todayMeals" class="mealgrid" style="grid-template-columns:1fr;margin-top:8px"></div><button class="btn secondary" id="ateDifferent" style="width:100%;margin-top:8px">＋ Ik heb iets anders gegeten</button><div id="todayTotal" class="day-total"></div></div>
- <div class="card"><h2 class="v6-card-title"><span class="stepno">2.</span>Recept details</h2><img id="featuredMealImg" class="recipe-hero" src="assets/meal-oats.jpg"><div id="featuredRecipe"><h3>Havermout met appel</h3><b style="color:#00985f">±390 kcal</b><p class="small muted">Tik links op een maaltijd voor ingrediënten, grammages en bereiding.</p></div></div>
- <div class="card"><h2 class="v6-card-title"><span class="stepno">3.</span>Jouw caloriebehoefte</h2><p class="small muted">Automatisch op basis van jouw profiel.</p><div id="todayCalorieSummary" class="ok"></div><button class="btn" onclick="setView('settings')" style="width:100%;margin-top:10px">Bekijk mijn gegevens</button></div>
- <div class="card"><h2 class="v6-card-title"><span class="stepno">4.</span>Recept delen</h2><img class="recipe-hero" src="assets/meal-pancakes.jpg"><h3>Deel met familie</h3><p class="small muted">Alleen recept, ingrediënten en bereiding worden gedeeld. Geen persoonlijke gegevens.</p><button class="btn" onclick="setView('recipes')" style="width:100%">Naar mijn recepten</button></div>
- <div class="card v6-wide"><h2 class="v6-card-title"><span class="stepno">5.</span>Weekmenu samenstellen</h2><p class="small muted">De app bewaakt je caloriegrens en past je boodschappen aan.</p><button class="btn" onclick="setView('week')">Open weekmenu</button></div>
- <div class="card"><h2 class="v6-card-title"><span class="stepno">6.</span>Boodschappenlijst</h2><div id="groceryPreview"></div><button class="btn secondary" onclick="setView('shopping')" style="width:100%;margin-top:8px">Volledige lijst</button></div>
- <div class="card"><h2 class="v6-card-title"><span class="stepno">7.</span>Sport met instructies</h2><div class="exercise-strip">
-  <div class="exercise-step"><img class="exercise-photo" src="assets/exercise-tai-1.jpg"><b>1 Houding</b><small>Rechtop, ontspannen.</small></div>
-  <div class="exercise-step"><img class="exercise-photo" src="assets/exercise-tai-2.jpg"><b>2 Stappen</b><small>Klein en rustig.</small></div>
-  <div class="exercise-step"><img class="exercise-photo" src="assets/exercise-tai-3.jpg"><b>3 Armen</b><small>Zacht meebewegen.</small></div>
-  <div class="exercise-step"><img class="exercise-photo" src="assets/exercise-tai-4.jpg"><b>4 Adem</b><small>Rustig in en uit.</small></div>
- </div><button class="btn" onclick="setView('sport')" style="width:100%;margin-top:9px">Start begeleiding</button><div id="todaySports" style="margin-top:6px"></div></div>
- <div class="card v6-full"><div class="between"><div><h2 class="v6-card-title"><span class="stepno">8.</span>Ik heb iets anders gegeten</h2><p class="small muted">Voer in wat je echt at. De app herberekent direct de rest van je dag.</p></div><button class="btn secondary sm" id="quickDifferent">＋ Toevoegen</button></div><div class="grid2"><div id="actualToday"></div><div><div id="remainingRingWrap"></div><div id="mixSuggestions" class="mixgrid"></div></div></div></div>
-</div></section>
+
+ <div class="card v6-full">
+   <h2 class="v6-card-title"><span class="stepno">1.</span>Sport vandaag</h2>
+   <div id="todaySportPlan"></div>
+   <div class="flex" style="margin-top:10px">
+     <button class="btn" id="openTodaySport">Bekijk instructies</button>
+     <label class="small" style="display:flex;align-items:center;gap:7px;margin:0"><input type="checkbox" id="todaySportDone" style="width:auto"> Sport gedaan</label>
+   </div>
+ </div>
+
+ <div class="card v6-full">
+   <div class="between">
+     <div><h2 class="v6-card-title"><span class="stepno">2.</span>Dagplanning</h2><p class="small muted">Dit is je voorgestelde menu voor vandaag. Je kunt een maaltijd wisselen of afvinken zodra je hem hebt gegeten.</p></div>
+     <div><span class="badge" id="planBadge">Startdatum</span> <span class="badge" id="calorieBadge">Caloriedoel</span></div>
+   </div>
+   <div id="todayMeals" class="mealgrid" style="grid-template-columns:1fr;margin-top:8px"></div>
+   <button class="btn secondary" id="ateDifferent" style="width:100%;margin-top:10px">＋ Ik heb iets anders gegeten</button>
+   <div id="actualToday" style="margin-top:10px"></div>
+   <div id="todayTotal" class="day-total"></div>
+   <div id="remainingRingWrap" style="margin-top:10px"></div>
+   <div id="mixSuggestions" class="mixgrid"></div>
+   <div id="todayCalorieSummary" class="ok" style="margin-top:10px"></div>
+ </div>
+
+ <div class="card v6-wide">
+   <h2 class="v6-card-title"><span class="stepno">3.</span>Weekmenu samenstellen</h2>
+   <p class="small muted">Bekijk of wijzig je automatische planning voor de komende weken.</p>
+   <button class="btn" onclick="setView('week','planning')">Open weekmenu</button>
+ </div>
+
+ <div class="card">
+   <h2 class="v6-card-title"><span class="stepno">4.</span>Boodschappenlijst</h2>
+   <div id="groceryPreview"></div>
+   <button class="btn secondary" onclick="setView('shopping')" style="width:100%;margin-top:8px">Volledige lijst</button>
+ </div>
+
+ <div class="card">
+   <h2 class="v6-card-title"><span class="stepno">5.</span>Receptdetails</h2>
+   <img id="featuredMealImg" class="recipe-hero" src="assets/meal-oats.jpg">
+   <div id="featuredRecipe"><h3>Vandaag</h3><p class="small muted">Klik bij een maaltijd hierboven op ‘Bekijk recept’ voor ingrediënten en bereiding.</p></div>
+   <button class="btn secondary" onclick="setView('recipes')" style="width:100%;margin-top:8px">Alle recepten</button>
+ </div>
+
+ <div class="card">
+   <h2 class="v6-card-title"><span class="stepno">6.</span>Recepten delen</h2>
+   <p class="small muted">Deel een eigen recept met een code of importeer een recept dat iemand met jou deelt.</p>
+   <button class="btn" onclick="setView('recipes')" style="width:100%">Naar recepten delen</button>
+ </div>
+
+</div>
+</section>
 
 <section id="week" class="view"><div class="between"><h2>Weekmenu kiezen</h2><div class="tabs" id="weekTabs"></div></div>
 <div class="card"><div class="between"><div><b>Persoonlijk dagdoel</b><div class="small muted">Keuzes die je dagtotaal overschrijden worden geblokkeerd.</div></div><span class="badge" id="weekTarget"></span></div></div><div id="weekPlan"></div></section>
@@ -753,6 +790,76 @@ async function saveHomeMeal(date,slot,recipeId){
  toast(`${SLOT_NAMES[slot]} gekozen — andere opties opnieuw berekend`);
 }
 
+
+function dayDoneState(date=iso()){
+ state.dailyDone=state.dailyDone||{};
+ state.dailyDone[date]=state.dailyDone[date]||{meals:{},sport:false};
+ state.dailyDone[date].meals=state.dailyDone[date].meals||{};
+ return state.dailyDone[date];
+}
+async function persistAppState(){
+ try{
+   const {error}=await sb.from("app_state").upsert({user_id:user.id,data:state},{onConflict:"user_id"});
+   if(error)throw error;
+ }catch(e){console.warn("App state save failed",e);toast("Afvinken kon niet worden opgeslagen");}
+}
+async function toggleMealDone(slot,checked){
+ const ds=dayDoneState();
+ ds.meals[slot]=!!checked;
+ await persistAppState();
+ renderToday();
+}
+async function toggleSportDone(checked){
+ const ds=dayDoneState();
+ ds.sport=!!checked;
+ await persistAppState();
+ renderToday();
+}
+function sportInstructionsForDate(date){
+ const p=plannedSportForDate(date);
+ if(p.name.includes("Calisthenics A")) return [
+   "5 min rustig opwarmen.",
+   "2–3 rondes: squat, incline push-up, glute bridge en dead bug.",
+   "8–12 herhalingen per oefening; stop ruim vóór technische vermoeidheid.",
+   "3–5 min rustig uitlopen en rekken."
+ ];
+ if(p.name.includes("Calisthenics B")) return [
+   "5 min rustig opwarmen.",
+   "2–3 rondes: reverse lunge of stoel-squat, wall/incline push-up, hip hinge en bird-dog.",
+   "8–12 herhalingen per oefening; gecontroleerd tempo.",
+   "3–5 min rustig uitlopen en rekken."
+ ];
+ if(p.name.includes("Reformer")) return [
+   "Volg je Reformer Pilates-les van ongeveer 50 minuten.",
+   "Werk gecontroleerd en houd je ademhaling rustig.",
+   "Kies weerstand waarbij je techniek netjes blijft."
+ ];
+ if(p.name.includes("Wandeling")||p.name.includes("Tai Chi")) return [
+   "Kies 30–45 minuten wandelen óf Tai Chi.",
+   "Houd een comfortabel tempo waarbij je nog kunt praten.",
+   "Bij Tai Chi: rechtop, kleine rustige stappen en ontspannen armen."
+ ];
+ return [
+   "Herstel staat vandaag voorop.",
+   "Een rustige wandeling van 20–40 minuten is optioneel.",
+   "Houd het tempo ontspannen."
+ ];
+}
+function renderTodaySportPlan(date=iso()){
+ const host=$("todaySportPlan"); if(!host)return;
+ const p=plannedSportForDate(date), done=dayDoneState(date).sport;
+ host.innerHTML=`<div class="ok"><b>🏃 ${esc(p.name)}</b><br><span class="small">${esc(p.duration)} • ${esc(p.note)}</span></div>
+ <ol style="margin-bottom:0">${sportInstructionsForDate(date).map(x=>`<li>${esc(x)}</li>`).join("")}</ol>`;
+ const cb=$("todaySportDone"); if(cb)cb.checked=done;
+}
+function openPlannedSport(){
+ const p=plannedSportForDate(iso());
+ if(p.name.includes("Calisthenics A"))training="A";
+ else if(p.name.includes("Calisthenics B"))training="B";
+ else training="tai";
+ renderGuide();
+ setView("sport","sport");
+}
 function plannedSportForDate(date){
  const day=new Date(date+"T12:00:00").getDay();
  const planByDay={
@@ -802,14 +909,17 @@ function renderToday(){
      ...optionRecipes.map(r=>`<option value="${esc(r.id)}" ${selected?.id===r.id?"selected":""}>${esc(r.name)} — ±${r.kcal} kcal</option>`)
    ].join("");
 
+   const mealDone=!!dayDoneState(date).meals[slot];
    row.innerHTML=`
-     <div class="home-meal-label"><b>${SLOT_NAMES[slot]}</b><span>${available!=null?`Tot ± ${available} kcal beschikbaar voor deze keuze`:""}</span></div>
+     <div class="home-meal-label"><b>${SLOT_NAMES[slot]}</b><span>${available!=null?`Tot ± ${available} kcal beschikbaar`:""}</span></div>
      <select class="home-meal-select">${options}</select>
      <div class="home-meal-kcal">${selected?.kcal?`± ${selected.kcal} kcal`:"—"}</div>
-     <div class="home-meal-detail">${allowed.length===0&&!selected?"Geen opties meer binnen je huidige dagdoel. Wis of wijzig één van de andere maaltijden.":selected?`Vandaag gepland: ${esc(selected.name)}`:"Geen maaltijd gepland."}</div>
+     <div class="home-meal-detail">${selected?`Voorgesteld: ${esc(selected.name)}`:"Geen maaltijd gepland."}</div>
+     <label class="small" style="display:flex;align-items:center;gap:7px;margin-top:7px"><input class="meal-done" type="checkbox" style="width:auto" ${mealDone?"checked":""}> Gegeten</label>
    `;
    const select=row.querySelector("select");
    select.onchange=()=>saveHomeMeal(date,slot,select.value);
+   row.querySelector(".meal-done").onchange=e=>toggleMealDone(slot,e.target.checked);
    $("todayMeals").appendChild(row);
 
    if(selected){
@@ -834,7 +944,7 @@ function renderToday(){
  $("todayCalorieSummary").innerHTML=t?`<b>🔥 ± ${t} kcal per dag</b><br><span class="small">Geschatte persoonlijke richtlijn</span>`:"Vul je profiel in om je dagdoel te berekenen.";
  $("remainingRingWrap").innerHTML=t?`<div class="flex"><div class="calorie-ring" style="--pct:${actualPct}%"><span>${eaten}</span></div><div><b>${eaten} / ${t} kcal</b><br><span style="color:#008f5c;font-weight:800">Nog ±${remainingActual} kcal over</span></div></div>`:"";
  renderActual();renderMix();renderGroceryPreview();
- $("todaySports").innerHTML=plannedSportHtml(iso());
+ renderTodaySportPlan(iso());
 }
 function renderActual(){
  const rows=foodLog.filter(x=>x.eaten_on===iso());$("actualToday").innerHTML=rows.length?`<b>Werkelijk toegevoegd vandaag</b>`+rows.map(x=>`<div class="actual-box between"><span>${esc(x.name)}<br><small>${esc(x.quantity_text||"")}</small></span><b>${Math.round(+x.calories)} kcal</b></div>`).join(""):`<div class="actual-box"><b>Nog niets afwijkends ingevoerd.</b><div class="small muted">Je geplande menu blijft actief.</div></div>`
@@ -1350,13 +1460,21 @@ async function saveDifferentMeal(){
  ["differentName","differentQty","differentKcal"].forEach(id=>$(id).value="");$("alsoSaveMeal").checked=false;closeModal("differentModal");renderAll();toast("Dag opnieuw berekend")
 }
 function renderAll(){renderEstimate();renderToday();renderWeek();renderGuide();renderSports();renderRecipes();renderShopping();renderProgress()}
-function setView(v){document.querySelectorAll(".view").forEach(x=>x.classList.toggle("active",x.id===v));document.querySelectorAll("#topNav button").forEach(x=>x.classList.toggle("active",x.dataset.view===v));window.scrollTo({top:0,behavior:"smooth"})}
-document.querySelectorAll("#topNav button").forEach(b=>b.onclick=()=>setView(b.dataset.view));$("profileShortcut").onclick=()=>setView("settings");
+function setView(v,navKey=null){
+ document.querySelectorAll(".view").forEach(x=>x.classList.toggle("active",x.id===v));
+ const fallback={today:"home",sport:"sport",week:"planning",shopping:"shopping",recipes:"recipes",settings:"settings"}[v]||null;
+ const activeKey=navKey||fallback;
+ document.querySelectorAll("#topNav button").forEach(x=>x.classList.toggle("active",x.dataset.nav===activeKey));
+ window.scrollTo({top:0,behavior:"smooth"});
+}
+document.querySelectorAll("#topNav button").forEach(b=>b.onclick=()=>setView(b.dataset.view,b.dataset.nav));$("profileShortcut").onclick=()=>setView("settings");
 document.querySelectorAll("#trainingTabs button").forEach(b=>b.onclick=()=>{training=b.dataset.training;renderGuide()});
 $("shoppingWeek").onchange=renderShopping;$("saveProfile").onclick=saveProfile;$("addRecipe").onclick=addRecipe;
 $("chooseProfilePhoto").onclick=()=>$("profilePhotoInput").click();
 $("profilePhotoInput").onchange=()=>{const f=$("profilePhotoInput").files?.[0];if(f)uploadProfilePhoto(f);$("profilePhotoInput").value=""};
 $("removeProfilePhoto").onclick=removeProfilePhoto;
+if($("openTodaySport"))$("openTodaySport").onclick=openPlannedSport;
+if($("todaySportDone"))$("todaySportDone").onchange=e=>toggleSportDone(e.target.checked);
 $("importRecipeUrl").onclick=importRecipeFromUrl;
 $("recipeIngredients").addEventListener("input",updateRecipeCalcPreview);
 $("recipeServings").addEventListener("input",updateRecipeCalcPreview);$("importRecipe").onclick=importRecipe;$("addSport").onclick=addSport;$("addMeasurement").onclick=addMeasurement;
