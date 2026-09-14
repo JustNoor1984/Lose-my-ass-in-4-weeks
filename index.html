@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="theme-color" content="#6f8f75"/>
+<title>Mijn 4-weken plan</title>
+<link rel="manifest" href="manifest.webmanifest"/>
+<link rel="icon" href="icon.svg" type="image/svg+xml"/>
+<link rel="apple-touch-icon" href="icon.svg"/>
+<style>
+:root {
+  --bg:#f7f6f1; --card:#fffdf9; --ink:#293229; --muted:#6e786e;
+  --sage:#dfeadf; --sage2:#6f8f75; --peach:#f6ded0; --lav:#e9e3f1;
+  --line:#dedfd9; --danger:#a45858; --shadow:0 8px 28px rgba(42,55,44,.08);
+}
+*{box-sizing:border-box} html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding-bottom:92px}
+button,input{font:inherit}
+header{padding:22px 18px 12px;max-width:820px;margin:auto}
+h1{font-size:1.7rem;margin:0 0 4px} h2{font-size:1.35rem;margin:4px 0 12px} h3{font-size:1.05rem;margin:0 0 8px}
+.muted{color:var(--muted)} .small{font-size:.86rem}
+main{max-width:820px;margin:auto;padding:0 14px}
+.view{display:none} .view.active{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;margin:10px 0;box-shadow:var(--shadow)}
+.hero{background:linear-gradient(135deg,var(--sage),#f4f7f1);border:none}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:#fff8;font-size:.82rem}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:620px){.grid2{grid-template-columns:1fr}}
+.checkrow{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--line)}
+.checkrow:last-child{border-bottom:none}
+.checkrow input{width:22px;height:22px;accent-color:var(--sage2);margin-top:2px}
+.done .label{text-decoration:line-through;color:var(--muted)}
+.meal-title{font-weight:700;font-size:.9rem;color:var(--sage2)}
+.pillbar{display:flex;gap:8px;overflow:auto;padding-bottom:6px;scrollbar-width:none}
+.pillbar button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:9px 13px;white-space:nowrap;color:var(--ink)}
+.pillbar button.active{background:var(--sage2);color:white;border-color:var(--sage2)}
+.day-head{display:flex;justify-content:space-between;gap:12px;align-items:center}
+.day-card{padding:14px;border:1px solid var(--line);border-radius:16px;margin:10px 0;background:white}
+.meals{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+@media(max-width:560px){.meals{grid-template-columns:1fr}}
+.meal{background:#faf9f5;border-radius:14px;padding:11px}
+.recipe-card{display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:center}
+.recipe-card svg{width:120px;height:auto;display:block}
+@media(max-width:540px){.recipe-card{grid-template-columns:92px 1fr}.recipe-card svg{width:92px}}
+.btn{border:0;border-radius:12px;background:var(--sage2);color:white;padding:10px 14px;font-weight:700}
+.btn.secondary{background:var(--sage);color:var(--ink)}
+.recipe-detail{display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.recipe-detail.open{display:block}
+.recipe-detail ol,.recipe-detail ul{padding-left:21px}
+.shop-group h3{margin-top:4px}
+.shopitem{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
+.shopitem:last-child{border-bottom:none} .shopitem input{width:21px;height:21px;accent-color:var(--sage2)}
+.progress-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.progress-row input{width:100%;border:1px solid var(--line);border-radius:12px;padding:11px;background:white}
+textarea{width:100%;min-height:90px;border:1px solid var(--line);border-radius:12px;padding:11px;resize:vertical}
+canvas{width:100%;height:220px;background:white;border-radius:14px;border:1px solid var(--line)}
+nav{position:fixed;left:0;right:0;bottom:0;background:rgba(255,253,249,.96);backdrop-filter:blur(16px);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(6,1fr);padding:7px max(8px,env(safe-area-inset-right)) calc(7px + env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));z-index:10}
+nav button{border:0;background:none;padding:6px 3px;color:var(--muted);font-size:.72rem}
+nav button span{display:block;font-size:1.25rem;line-height:1.1;margin-bottom:2px}
+nav button.active{color:var(--sage2);font-weight:800}
+.toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:#263127;color:white;padding:10px 14px;border-radius:999px;opacity:0;pointer-events:none;transition:.25s;z-index:99}
+.toast.show{opacity:1}
+.kicker{text-transform:uppercase;letter-spacing:.08em;font-size:.75rem;font-weight:800;color:var(--sage2)}
+.week-summary{display:flex;gap:8px;flex-wrap:wrap}
+.week-summary .badge{background:var(--peach)}
+hr{border:0;border-top:1px solid var(--line);margin:14px 0}
+
+.swaprow{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.swaprow select,.recipe-form input,.recipe-form textarea,.recipe-form select{
+  width:100%;border:1px solid var(--line);border-radius:12px;padding:10px;background:#fff;color:var(--ink)
+}
+.swaprow select{flex:1;min-width:180px}
+.btn.tiny{padding:8px 10px;font-size:.82rem}
+.flex{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.flex-between{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.info{padding:10px 12px;border-radius:14px;background:var(--lav);font-size:.88rem}
+.custom-recipe{border-left:5px solid var(--sage2)}
+.shopping-source{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.shopping-source button{border:1px solid var(--line);background:white;border-radius:999px;padding:8px 11px}
+.shopping-source button.active{background:var(--sage2);color:white;border-color:var(--sage2)}
+.modal{position:fixed;inset:0;background:rgba(22,29,23,.42);display:none;align-items:flex-end;justify-content:center;z-index:100}
+.modal.open{display:flex}
+.modal-panel{width:min(820px,100%);max-height:88vh;overflow:auto;background:var(--bg);border-radius:24px 24px 0 0;padding:18px 14px calc(20px + env(safe-area-inset-bottom))}
+.modal-handle{width:44px;height:5px;background:#c7cbc4;border-radius:999px;margin:0 auto 12px}
+.choice-list{display:grid;gap:8px}
+.choice{padding:12px;border:1px solid var(--line);border-radius:14px;background:white;text-align:left;color:var(--ink)}
+.choice.active{border-color:var(--sage2);box-shadow:0 0 0 2px #dfeadf inset}
+.empty{padding:18px;text-align:center;color:var(--muted)}
+
+
+/* v3 */
+.segmented{display:flex;background:#eef1eb;border-radius:14px;padding:4px;gap:4px}
+.segmented button{flex:1;border:0;background:transparent;border-radius:10px;padding:8px 10px;color:var(--muted)}
+.segmented button.active{background:#fff;color:var(--ink);box-shadow:0 2px 10px rgba(0,0,0,.06);font-weight:800}
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px;text-align:center}
+.kpi b{display:block;font-size:1.15rem}
+.exercise{display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.exercise:last-child{border-bottom:0}
+.exercise .num{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--sage);font-weight:800;color:var(--sage2)}
+.exercise.done .exercise-name{text-decoration:line-through;color:var(--muted)}
+.timerbox{display:flex;gap:10px;align-items:center;justify-content:space-between;background:var(--sage);padding:12px;border-radius:16px;margin-top:12px}
+.timer-display{font-variant-numeric:tabular-nums;font-size:1.6rem;font-weight:800}
+.drag-handle{font-size:1.1rem;color:var(--muted);cursor:grab;padding:6px}
+.dragging{opacity:.45}
+.drop-target{outline:2px dashed var(--sage2);outline-offset:3px}
+.portion-control{display:flex;gap:8px;align-items:center}
+.portion-control button{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:#fff;font-weight:800}
+.portion-count{min-width:34px;text-align:center;font-weight:800}
+.recipe-photo{width:100%;max-height:190px;object-fit:cover;border-radius:16px;background:#f2eee7}
+.recipe-art{border-radius:16px;overflow:hidden;background:#faf7f1}
+.recipe-art svg{width:100%;height:auto;display:block}
+.week-day-movable{touch-action:manipulation}
+.swap-dinner-btn{margin-top:8px}
+.mini-chart-wrap{overflow-x:auto}
+.goalbar{height:10px;border-radius:999px;background:#e6e8e2;overflow:hidden}
+.goalbar > span{display:block;height:100%;background:var(--sage2);width:0}
+.stat-note{font-size:.82rem;color:var(--muted)}
+.settings-row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.settings-row:last-child{border-bottom:0}
+.settings-row input{max-width:110px;border:1px solid var(--line);border-radius:10px;padding:8px}
+.hidden{display:none!important}
+
+</style>
+</head>
+<body>
+<header>
+  <div class="kicker">Mijn privéplan</div>
+  <h1>4 weken sterker & fitter</h1>
+  <div class="muted small">Alles wat je afvinkt en invult blijft lokaal op dit toestel bewaard.</div>
+</header>
+
+<main>
+<section id="today" class="view active">
+  <div class="card hero">
+    <div class="badge" id="dateBadge">Vandaag</div>
+    <h2 id="todayTitle">Vandaag</h2>
+    <div id="todayActivity"></div>
+  </div>
+  <div class="card">
+    <h3>Vandaag afvinken</h3>
+    <div id="todayChecklist"></div>
+  </div>
+  <div class="card">
+    <div class="flex-between">
+      <div><h3 style="margin-bottom:2px">Wat eet ik vandaag?</h3><div class="small muted">Maak een snelle keuze uit je eigen weekschema.</div></div>
+      <button class="btn secondary" id="todayFoodBtn">Kies voor vandaag</button>
+    </div>
+    <div id="todayFoodSuggestion" class="info" style="display:none;margin-top:10px"></div>
+  </div>
+  <div class="card">
+    <h3>Notitie van vandaag</h3>
+    <textarea id="dailyNote" placeholder="Bijvoorbeeld: energie, honger, spierpijn, hoe de training ging..."></textarea>
+  </div>
+</section>
+
+<section id="week" class="view">
+  <div class="pillbar" id="weekPills"></div>
+  <div class="card info">Je kunt maaltijden omwisselen. Bij avondeten kun je ook twee dagen met elkaar verwisselen.</div>
+  <div id="weekContent"></div>
+</section>
+
+
+<section id="training" class="view">
+  <h2>Training</h2>
+  <div class="segmented" id="trainingTabs">
+    <button data-train="A" class="active">Kracht A</button>
+    <button data-train="B">Kracht B</button>
+    <button data-train="Pilates">Pilates</button>
+  </div>
+  <div id="trainingContent"></div>
+</section>
+
+<section id="recipes" class="view">
+  <h2>Recepten</h2>
+  <div class="muted small">Budgetvriendelijk, eenvoudig en passend bij je schema.</div>
+  <div id="recipeList"></div>
+  <div class="card recipe-form">
+    <h3>Eigen recept toevoegen</h3>
+    <p class="small muted">Dit recept blijft alleen in deze app op jouw toestel bewaard.</p>
+    <label>Naam<input id="customRecipeTitle" placeholder="Bijv. snelle linzensoep"></label>
+    <label>Type<select id="customRecipeType"><option>Avondeten</option><option>Lunch</option><option>Ontbijt</option><option>Tussendoor</option></select></label>
+    <label>Ingrediënten<textarea id="customRecipeIngredients" placeholder="Één ingrediënt per regel"></textarea></label>
+    <label>Bereiding<textarea id="customRecipeSteps" placeholder="Één stap per regel"></textarea></label>
+    <p><button class="btn" id="addCustomRecipe">Recept opslaan</button></p>
+  </div>
+</section>
+
+<section id="shopping" class="view">
+  <h2>Boodschappen</h2>
+  <div class="shopping-source">
+    <button id="shopDefaultBtn" class="active">Basis weeklijst</button>
+    <button id="shopChosenBtn">Op basis van gekozen week</button>
+  </div>
+  <div class="card">
+    <div class="week-summary">
+      <span class="badge">Lidl-vriendelijk</span><span class="badge">huismerk</span><span class="badge">weinig verspilling</span>
+    </div>
+    <p class="small muted">Tik af tijdens het winkelen. Je lijst blijft bewaard.</p>
+  </div>
+  <div id="shoppingList"></div>
+  <button class="btn secondary" id="resetShop">Wis vinkjes boodschappen</button>
+</section>
+
+<section id="progress" class="view">
+  <h2>Voortgang</h2>
+  <div class="card">
+    <div class="kpi-grid" id="progressKpis"></div>
+    <div style="height:10px"></div>
+    <div class="progress-row">
+      <label>Gewicht (kg)<input type="number" id="weightInput" inputmode="decimal" step="0.1" placeholder="bijv. 91.4"></label>
+      <label>Taille (cm)<input type="number" id="waistInput" inputmode="decimal" step="0.1" placeholder="optioneel"></label>
+    </div>
+    <p><button class="btn" id="saveProgress">Opslaan</button></p>
+    <div class="mini-chart-wrap"><canvas id="chart" width="700" height="260"></canvas></div>
+    <div style="height:12px"></div>
+    <label class="small">Doelgewicht (optioneel)
+      <input type="number" id="goalWeight" inputmode="decimal" step="0.1" placeholder="bijv. 80">
+    </label>
+    <div class="goalbar" style="margin-top:8px"><span id="goalBarFill"></span></div>
+    <div id="goalText" class="stat-note" style="margin-top:5px"></div>
+  </div>
+  <div class="card">
+    <h3>Mijn metingen</h3>
+    <div id="progressList" class="small"></div>
+  </div>
+</section>
+</main>
+
+<div class="modal" id="swapModal" aria-hidden="true">
+  <div class="modal-panel">
+    <div class="modal-handle"></div>
+    <div class="flex-between"><h3 id="swapTitle">Maaltijd kiezen</h3><button class="btn secondary tiny" id="closeSwap">Sluiten</button></div>
+    <div id="swapChoices" class="choice-list"></div>
+  </div>
+</div>
+<nav>
+<button data-view="today" class="active"><span>☀️</span>Vandaag</button>
+<button data-view="week"><span>🗓️</span>Schema</button>
+<button data-view="training"><span>🏋️</span>Training</button>
+<button data-view="recipes"><span>🍲</span>Recepten</button>
+<button data-view="shopping"><span>🛒</span>Boodschappen</button>
+<button data-view="progress"><span>📈</span>Voortgang</button>
+</nav>
+<div class="toast" id="toast">Opgeslagen</div>
+
+<script>
+const DATA = {"weeks": [[{"day": "Maandag", "activity": "Kracht A", "activityDetail": "25–30 min calisthenics", "breakfast": "50 g havermout + 250 ml halfvolle melk + appel + kaneel", "lunch": "3 volkoren boterhammen + 2 eieren + komkommer", "snack": "200 g magere kwark + fruit", "dinner": "75 g volkoren pasta (droog) + 150 g kip + 300 g groente + 200 g passata"}, {"day": "Dinsdag", "activity": "Wandelen / Tai Chi", "activityDetail": "30–45 min", "breakfast": "250 g magere kwark + 40 g havermout + appel", "lunch": "3 boterhammen + 150 g hüttenkäse + komkommer", "snack": "200 g kwark + fruit", "dinner": "75 g rijst (droog) + 150 g kip + 300 g wokgroente + beetje sojasaus"}, {"day": "Woensdag", "activity": "Reformer Pilates", "activityDetail": "50 min", "breakfast": "2 eieren + 2 volkoren boterhammen + fruit", "lunch": "3 boterhammen + 100 g kiprestjes + komkommer/wortel", "snack": "Fruit + 20 g ongezouten pinda's", "dinner": "300 g aardappelen + 150 g kip + 300 g groente"}, {"day": "Donderdag", "activity": "Rustig wandelen / Tai Chi", "activityDetail": "30–45 min", "breakfast": "50 g havermout + 250 ml melk + 1/2 banaan meegekookt/geprakt + kaneel", "lunch": "3 boterhammen + 2 eieren + komkommer", "snack": "200 g kwark + appel", "dinner": "2 volkoren wraps + 100 g kip + 150 g kidneybonen + paprika/ui/sla + yoghurtsaus"}, {"day": "Vrijdag", "activity": "Kracht B", "activityDetail": "25–30 min calisthenics", "breakfast": "250 g kwark + 40 g havermout + peer of appel", "lunch": "3 boterhammen + 150 g hüttenkäse + komkommer", "snack": "1 gekookt ei + fruit + 150 g kwark", "dinner": "75 g volkoren pasta + 125 g mager gehakt + 300 g groente + 200 g passata"}, {"day": "Zaterdag", "activity": "Wandelen / Tai Chi", "activityDetail": "45–60 min", "breakfast": "2 eieren + 2 volkoren boterhammen + fruit", "lunch": "3 boterhammen + 2 eieren + rauwkost", "snack": "200 g kwark + 20 g pinda's", "dinner": "Chili: 60–75 g rijst + 125 g mager gehakt + 150 g kidneybonen + mais + paprika/ui + passata"}, {"day": "Zondag", "activity": "Rust", "activityDetail": "of 20–30 min ontspannen wandelen", "breakfast": "Havermoutpannenkoekjes: 50 g havermout + 1 ei + 1/2 verwerkte banaan; 150 g kwark erbij", "lunch": "3 boterhammen + kiprestjes of 2 eieren + komkommer", "snack": "200 g kwark + fruit", "dinner": "300 g aardappelen + 150 g kip of 200 g bonen + 300 g groente"}], [{"day": "Maandag", "activity": "Kracht A", "activityDetail": "25–30 min calisthenics", "breakfast": "2 eieren + 2 volkoren boterhammen + fruit", "lunch": "3 boterhammen + 150 g hüttenkäse + komkommer", "snack": "Fruit + 20 g ongezouten pinda's", "dinner": "300 g aardappelen + 150 g kip + 300 g groente"}, {"day": "Dinsdag", "activity": "Wandelen / Tai Chi", "activityDetail": "30–45 min", "breakfast": "50 g havermout + 250 ml melk + 1/2 banaan meegekookt/geprakt + kaneel", "lunch": "3 boterhammen + 100 g kiprestjes + komkommer/wortel", "snack": "200 g kwark + appel", "dinner": "2 volkoren wraps + 100 g kip + 150 g kidneybonen + paprika/ui/sla + yoghurtsaus"}, {"day": "Woensdag", "activity": "Reformer Pilates", "activityDetail": "50 min", "breakfast": "250 g kwark + 40 g havermout + peer of appel", "lunch": "3 boterhammen + 2 eieren + komkommer", "snack": "1 gekookt ei + fruit + 150 g kwark", "dinner": "75 g volkoren pasta + 125 g mager gehakt + 300 g groente + 200 g passata"}, {"day": "Donderdag", "activity": "Rustig wandelen / Tai Chi", "activityDetail": "30–45 min", "breakfast": "2 eieren + 2 volkoren boterhammen + fruit", "lunch": "3 boterhammen + 150 g hüttenkäse + komkommer", "snack": "200 g kwark + 20 g pinda's", "dinner": "Chili: 60–75 g rijst + 125 g mager gehakt + 150 g kidneybonen + mais + paprika/ui + passata"}, {"day": "Vrijdag", "activity": "Kracht B", "activityDetail": "25–30 min calisthenics", "breakfast": "Havermoutpannenkoekjes: 50 g havermout + 1 ei + 1/2 verwerkte banaan; 150 g kwark erbij", "lunch": "3 boterhammen + 2 eieren + rauwkost", "snack": "200 g kwark + fruit", "dinner": "300 g aardappelen + 150 g kip of 200 g bonen + 300 g groente"}, {"day": "Zaterdag", "activity": "Wandelen / Tai Chi", "activityDetail": "45–60 min", "breakfast": "50 g havermout + 250 ml halfvolle melk + appel + kaneel", "lunch": "3 boterhammen + kiprestjes of 2 eieren + komkommer", "snack": "200 g magere kwark + fruit", "dinner": "75 g volkoren pasta (droog) + 150 g kip + 300 g groente + 200 g passata"}, {"day": "Zondag", "activity": "Rust", "activityDetail": "of 20–30 min ontspannen wandelen", "breakfast": "250 g magere kwark + 40 g havermout + appel", "lunch": "3 volkoren boterhammen + 2 eieren + komkommer", "snack": "200 g kwark + fruit", "dinner": "75 g rijst (droog) + 150 g kip + 300 g wokgroente + beetje sojasaus"}], [{"day": "Maandag", "activity": "Kracht A", "activityDetail": "25–30 min calisthenics", "breakfast": "250 g kwark + 40 g havermout + peer of appel", "lunch": "3 boterhammen + 100 g kiprestjes + komkommer/wortel", "snack": "1 gekookt ei + fruit + 150 g kwark", "dinner": "75 g volkoren pasta + 125 g mager gehakt + 300 g groente + 200 g passata"}, {"day": "Dinsdag", "activity": "Wandelen / Tai Chi", "activityDetail": "30–45 min", "breakfast": "2 eieren + 2 volkoren boterhammen + fruit", "lunch": "3 boterhammen + 2 eieren + komkommer", "snack": "200 g kwark + 20 g pinda's", "dinner": "Chili: 60–75 g rijst + 125 g mager gehakt + 150 g kidneybonen + mais + paprika/ui + passata"}, {"day": "Woensdag", "activity": "Reformer Pilates", "activityDetail": "50 min", "breakfast": "Havermoutpannenkoekjes: 50 g havermout + 1 ei + 1/2 verwerkte banaan; 150 g kwark erbij", "lunch": "3 boterhammen + 150 g hüttenkäse + komkommer", "snack": "200 g kwark + fruit", "dinner": "300 g aardappelen + 150 g kip of 200 g bonen + 300 g groente"}, {"day": "Donderdag", "activity": "Rustig wandelen / Tai Chi", "activityDetail": "30–45 min", "breakfast": "50 g havermout + 250 ml halfvolle melk + appel + kaneel", "lunch": "3 boterhammen + 2 eieren + rauwkost", "snack": "200 g magere kwark + fruit", "dinner": "75 g volkoren pasta (droog) + 150 g kip + 300 g groente + 200 g passata"}, {"day": "Vrijdag", "activity": "Kracht B", "activityDetail": "25–30 min calisthenics", "breakfast": "250 g magere kwark + 40 g havermout + appel", "lunch": "3 boterhammen + kiprestjes of 2 eieren + komkommer", "snack": "200 g kwark + fruit", "dinner": "75 g rijst (droog) + 150 g kip + 300 g wokgroente + beetje sojasaus"}, {"day": "Zaterdag", "activity": "Wandelen / Tai Chi", "activityDetail": "45–60 min", "breakfast": "2 eieren + 2 volkoren boterhammen + fruit", "lunch": "3 volkoren boterhammen + 2 eieren + komkommer", "snack": "Fruit + 20 g ongezouten pinda's", "dinner": "300 g aardappelen + 150 g kip + 300 g groente"}, {"day": "Zondag", "activity": "Rust", "activityDetail": "of 20–30 min ontspannen wandelen", "breakfast": "50 g havermout + 250 ml melk + 1/2 banaan meegekookt/geprakt + kaneel", "lunch": "3 boterhammen + 150 g hüttenkäse + komkommer", "snack": "200 g kwark + appel", "dinner": "2 volkoren wraps + 100 g kip + 150 g kidneybonen + paprika/ui/sla + yoghurtsaus"}], [{"day": "Maandag", "activity": "Kracht A", "activityDetail": "25–30 min calisthenics", "breakfast": "Havermoutpannenkoekjes: 50 g havermout + 1 ei + 1/2 verwerkte banaan; 150 g kwark erbij", "lunch": "3 boterhammen + 2 eieren + komkommer", "snack": "200 g kwark + fruit", "dinner": "300 g aardappelen + 150 g kip of 200 g bonen + 300 g groente"}, {"day": "Dinsdag", "activity": "Wandelen / Tai Chi", "activityDetail": "30–45 min", "breakfast": "50 g havermout + 250 ml halfvolle melk + appel + kaneel", "lunch": "3 boterhammen + 150 g hüttenkäse + komkommer", "snack": "200 g magere kwark + fruit", "dinner": "75 g volkoren pasta (droog) + 150 g kip + 300 g groente + 200 g passata"}, {"day": "Woensdag", "activity": "Reformer Pilates", "activityDetail": "50 min", "breakfast": "250 g magere kwark + 40 g havermout + appel", "lunch": "3 boterhammen + 2 eieren + rauwkost", "snack": "200 g kwark + fruit", "dinner": "75 g rijst (droog) + 150 g kip + 300 g wokgroente + beetje sojasaus"}, {"day": "Donderdag", "activity": "Rustig wandelen / Tai Chi", "activityDetail": "30–45 min", "breakfast": "2 eieren + 2 volkoren boterhammen + fruit", "lunch": "3 boterhammen + kiprestjes of 2 eieren + komkommer", "snack": "Fruit + 20 g ongezouten pinda's", "dinner": "300 g aardappelen + 150 g kip + 300 g groente"}, {"day": "Vrijdag", "activity": "Kracht B", "activityDetail": "25–30 min calisthenics", "breakfast": "50 g havermout + 250 ml melk + 1/2 banaan meegekookt/geprakt + kaneel", "lunch": "3 volkoren boterhammen + 2 eieren + komkommer", "snack": "200 g kwark + appel", "dinner": "2 volkoren wraps + 100 g kip + 150 g kidneybonen + paprika/ui/sla + yoghurtsaus"}, {"day": "Zaterdag", "activity": "Wandelen / Tai Chi", "activityDetail": "45–60 min", "breakfast": "250 g kwark + 40 g havermout + peer of appel", "lunch": "3 boterhammen + 150 g hüttenkäse + komkommer", "snack": "1 gekookt ei + fruit + 150 g kwark", "dinner": "75 g volkoren pasta + 125 g mager gehakt + 300 g groente + 200 g passata"}, {"day": "Zondag", "activity": "Rust", "activityDetail": "of 20–30 min ontspannen wandelen", "breakfast": "2 eieren + 2 volkoren boterhammen + fruit", "lunch": "3 boterhammen + 100 g kiprestjes + komkommer/wortel", "snack": "200 g kwark + 20 g pinda's", "dinner": "Chili: 60–75 g rijst + 125 g mager gehakt + 150 g kidneybonen + mais + paprika/ui + passata"}]], "recipes": [{"id": "kip-pasta", "title": "Kip-pasta met veel groente", "emoji": "🍝", "time": "20 min", "ingredients": ["75 g volkoren pasta (droog)", "150 g kipfilet", "300 g (diepvries)groente", "200 g passata", "1 tl olie", "Italiaanse kruiden", "Peper en knoflook naar smaak"], "steps": ["Kook de volkoren pasta volgens de verpakking.", "Snijd de kip in blokjes en bak die in 1 theelepel olie gaar.", "Voeg de groente toe en bak 5–7 minuten mee.", "Schenk de passata erbij en breng op smaak met Italiaanse kruiden, peper en knoflook.", "Laat 3–5 minuten zacht pruttelen en serveer met de pasta."], "tip": "Maak meteen 2 porties; de tweede is handig als lunch of voor een drukke avond."}, {"id": "kip-rijst", "title": "Kip-rijstwok", "emoji": "🍚", "time": "20 min", "ingredients": ["75 g rijst (droog)", "150 g kipfilet", "300 g wokgroente", "1 tl olie", "1–2 tl sojasaus", "Knoflook en paprikapoeder"], "steps": ["Kook de rijst volgens de verpakking.", "Bak de kip in 1 theelepel olie gaar en lichtbruin.", "Voeg de wokgroente toe en bak mee tot de groente warm maar nog stevig is.", "Breng op smaak met sojasaus, knoflook en paprikapoeder.", "Schep de rijst erdoor of serveer apart."], "tip": "Gebruik diepvries-wokgroente voor minder snijwerk en minder verspilling."}, {"id": "wraps", "title": "Volkoren wraps met kip en bonen", "emoji": "🌯", "time": "15 min", "ingredients": ["2 volkoren wraps", "100 g kipfilet", "150 g kidneybonen, afgespoeld", "Paprika en ui", "Sla en komkommer", "2 el magere yoghurt of kwark", "Paprikapoeder, komijn en peper"], "steps": ["Snijd kip, paprika en ui klein.", "Bak de kip gaar en voeg paprika en ui toe.", "Voeg de kidneybonen toe en verwarm nog 2–3 minuten.", "Meng yoghurt of kwark met peper en kruiden tot een snelle saus.", "Vul de wraps met sla, komkommer, kip-bonenmengsel en yoghurtsaus."], "tip": "Je kunt de kip vervangen door extra bonen voor een goedkopere vegetarische variant."}, {"id": "chili", "title": "Budget-chili", "emoji": "🥘", "time": "25 min", "ingredients": ["60–75 g rijst (droog)", "125 g mager gehakt", "150 g kidneybonen", "Mais naar smaak", "1/2 paprika", "1/2 ui", "200 g passata", "Komijn en paprikapoeder"], "steps": ["Kook de rijst.", "Bak het gehakt rul in een pan.", "Voeg ui en paprika toe en bak 3–4 minuten mee.", "Voeg kidneybonen, mais, passata, komijn en paprikapoeder toe.", "Laat 8–10 minuten zacht pruttelen en serveer met rijst."], "tip": "Chili is ideaal om in porties in te vriezen."}, {"id": "havermout-banaan", "title": "Warme havermout met banaan", "emoji": "🥣", "time": "8 min", "ingredients": ["50 g havermout", "250 ml halfvolle melk", "1/2 banaan", "Kaneel"], "steps": ["Doe havermout en melk in een pannetje.", "Verwarm rustig en roer regelmatig.", "Prak de halve banaan en roer deze tijdens het koken door de havermout.", "Laat indikken tot de gewenste structuur.", "Bestrooi met kaneel."], "tip": "Zo is de banaan verwerkt in plaats van rauw gegeten."}, {"id": "pannenkoekjes", "title": "Havermout-banaanpannenkoekjes", "emoji": "🥞", "time": "15 min", "ingredients": ["50 g havermout", "1 ei", "1/2 banaan", "Scheutje melk", "150 g magere kwark", "Kaneel"], "steps": ["Prak de banaan fijn.", "Meng met ei, havermout en een klein scheutje melk.", "Laat het beslag 2 minuten staan.", "Bak 3–4 kleine pannenkoekjes in een goede antiaanbakpan.", "Serveer met 150 g magere kwark en kaneel."], "tip": "Ook lekker met warme appelblokjes en kaneel."}], "shopping": [["Zuivel", ["Magere kwark 1,75–2 kg", "Halfvolle melk 1–2 L", "Hüttenkäse 1–2 bakjes"]], ["Eiwit", ["10–12 eieren", "Kip circa 900 g", "Mager gehakt 250–300 g", "Kidneybonen 3 blikken"]], ["Basis", ["Havermout 500 g", "Volkorenbrood 1–2 broden", "Rijst 500 g", "Volkoren pasta 500 g", "Aardappelen 1,5–2 kg", "Volkoren wraps 1 pak"]], ["Groente", ["Diepvriesgroente 1,5–2 kg", "Uien", "Paprika", "Komkommer", "Wortels", "Sla", "Mais", "Passata 3 pakken/potten"]], ["Fruit", ["7–10 appels/peren of seizoensfruit", "2–3 bananen om te verwerken"]], ["Voorraad", ["Ongezouten pinda's", "Sojasaus", "Kaneel", "Paprikapoeder", "Komijn", "Italiaanse kruiden", "Olie", "Peper/knoflook"]]]};
+const SVG = {"🍝": "<svg viewBox=\"0 0 160 110\" aria-hidden=\"true\"><rect width=\"160\" height=\"110\" rx=\"20\" fill=\"#FFF6EE\"/><ellipse cx=\"80\" cy=\"70\" rx=\"52\" ry=\"23\" fill=\"#F4DDD0\"/><ellipse cx=\"80\" cy=\"66\" rx=\"45\" ry=\"18\" fill=\"#FFFDFC\"/><path d=\"M44 61c18-15 54-15 74 0M48 67c20-13 49-13 65 0M54 73c16-9 39-9 52 0\" fill=\"none\" stroke=\"#C28F72\" stroke-width=\"5\" stroke-linecap=\"round\"/><circle cx=\"71\" cy=\"60\" r=\"5\" fill=\"#8DA887\"/><circle cx=\"95\" cy=\"70\" r=\"5\" fill=\"#8DA887\"/><circle cx=\"87\" cy=\"59\" r=\"4\" fill=\"#D9755B\"/></svg>", "🍚": "<svg viewBox=\"0 0 160 110\" aria-hidden=\"true\"><rect width=\"160\" height=\"110\" rx=\"20\" fill=\"#F6F9F4\"/><path d=\"M38 59h84c-2 28-18 39-42 39S40 87 38 59z\" fill=\"#D8E6D9\"/><ellipse cx=\"80\" cy=\"59\" rx=\"42\" ry=\"16\" fill=\"#FFF\"/><circle cx=\"65\" cy=\"55\" r=\"5\" fill=\"#8DA887\"/><circle cx=\"84\" cy=\"49\" r=\"6\" fill=\"#E0A46F\"/><circle cx=\"99\" cy=\"59\" r=\"5\" fill=\"#A5B889\"/><circle cx=\"78\" cy=\"62\" r=\"4\" fill=\"#D9755B\"/></svg>", "🌯": "<svg viewBox=\"0 0 160 110\" aria-hidden=\"true\"><rect width=\"160\" height=\"110\" rx=\"20\" fill=\"#FFF8ED\"/><path d=\"M42 85c18-36 50-57 74-52 10 3 13 13 7 22-19 29-48 43-78 39z\" fill=\"#E7C990\"/><path d=\"M55 76c18-24 40-35 57-34\" stroke=\"#8DA887\" stroke-width=\"7\" stroke-linecap=\"round\"/><path d=\"M62 66c14-14 27-20 39-20\" stroke=\"#D9755B\" stroke-width=\"6\" stroke-linecap=\"round\"/><circle cx=\"86\" cy=\"60\" r=\"6\" fill=\"#7C5A46\"/></svg>", "🥘": "<svg viewBox=\"0 0 160 110\" aria-hidden=\"true\"><rect width=\"160\" height=\"110\" rx=\"20\" fill=\"#FFF4F0\"/><rect x=\"35\" y=\"48\" width=\"90\" height=\"42\" rx=\"14\" fill=\"#B65D4B\"/><rect x=\"48\" y=\"38\" width=\"64\" height=\"8\" rx=\"4\" fill=\"#6D7468\"/><circle cx=\"66\" cy=\"64\" r=\"6\" fill=\"#F5C26B\"/><circle cx=\"88\" cy=\"72\" r=\"7\" fill=\"#7A4D3A\"/><circle cx=\"101\" cy=\"61\" r=\"6\" fill=\"#8DA887\"/><rect x=\"20\" y=\"59\" width=\"18\" height=\"7\" rx=\"3\" fill=\"#6D7468\"/><rect x=\"122\" y=\"59\" width=\"18\" height=\"7\" rx=\"3\" fill=\"#6D7468\"/></svg>", "🥣": "<svg viewBox=\"0 0 160 110\" aria-hidden=\"true\"><rect width=\"160\" height=\"110\" rx=\"20\" fill=\"#F7F4EC\"/><path d=\"M35 57h90c-2 28-19 40-45 40S37 85 35 57z\" fill=\"#E5D7BF\"/><ellipse cx=\"80\" cy=\"57\" rx=\"45\" ry=\"16\" fill=\"#F3E7CA\"/><circle cx=\"64\" cy=\"53\" r=\"8\" fill=\"#E9C966\"/><circle cx=\"85\" cy=\"58\" r=\"8\" fill=\"#E9C966\"/><circle cx=\"103\" cy=\"51\" r=\"7\" fill=\"#E9C966\"/><path d=\"M45 38l12 13\" stroke=\"#8B6B49\" stroke-width=\"3\" stroke-linecap=\"round\"/></svg>", "🥞": "<svg viewBox=\"0 0 160 110\" aria-hidden=\"true\"><rect width=\"160\" height=\"110\" rx=\"20\" fill=\"#FFF8ED\"/><ellipse cx=\"80\" cy=\"80\" rx=\"44\" ry=\"12\" fill=\"#E3C08C\"/><ellipse cx=\"80\" cy=\"68\" rx=\"40\" ry=\"12\" fill=\"#EDCC98\"/><ellipse cx=\"80\" cy=\"56\" rx=\"36\" ry=\"12\" fill=\"#F2D6A8\"/><circle cx=\"80\" cy=\"49\" r=\"8\" fill=\"#F0C94B\"/><path d=\"M54 47c18-8 35-8 52 0\" stroke=\"#A46C4B\" stroke-width=\"3\" stroke-linecap=\"round\"/></svg>"};
+const LS = {
+  checks:"m4w_checks_v1", notes:"m4w_notes_v1", shop:"m4w_shop_v1", progress:"m4w_progress_v1", week:"m4w_week_v1",
+  swaps:"m4w_swaps_v2", customRecipes:"m4w_custom_recipes_v2", shopMode:"m4w_shop_mode_v2",
+  training:"m4w_training_v3", goal:"m4w_goal_v3", portions:"m4w_portions_v3"
+};
+const load=(k,fallback)=>{try{return JSON.parse(localStorage.getItem(k)) ?? fallback}catch(e){return fallback}};
+const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+let currentWeek = load(LS.week,1);
+let checks=load(LS.checks,{});
+let notes=load(LS.notes,{});
+let shop=load(LS.shop,{});
+let progress=load(LS.progress,[]);
+let swaps=load(LS.swaps,{});
+let customRecipes=load(LS.customRecipes,[]);
+let shopMode=load(LS.shopMode,"default");
+let trainingState=load(LS.training,{});
+let goalWeight=load(LS.goal,"");
+let portions=load(LS.portions,{});
+let activeTraining="A";
+let timerInterval=null, timerRemaining=60;
+
+function toast(msg="Opgeslagen"){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1200)}
+function isoDate(d=new Date()){return d.toISOString().slice(0,10)}
+function mondayIndex(d=new Date()){return (d.getDay()+6)%7}
+function currentDayData(){return DATA.weeks[currentWeek-1][mondayIndex()]}
+function esc(s){return String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]))}
+
+
+function mealKey(week, day, type){return `w${week}|${day}|${type}`}
+function mealValue(week, dayObj, type){
+  const key=mealKey(week,dayObj.day,type);
+  return swaps[key] || dayObj[type];
+}
+function allMealOptions(type){
+  const values=[];
+  DATA.weeks.forEach(w=>w.forEach(d=>values.push(d[type])));
+  customRecipes.filter(r=>r.typeKey===type).forEach(r=>values.push(r.summary || r.title));
+  return [...new Set(values)];
+}
+function openSwap(dayObj,type,label){
+  const modal=document.getElementById("swapModal"), host=document.getElementById("swapChoices");
+  document.getElementById("swapTitle").textContent=`${label} kiezen voor ${dayObj.day}`;
+  const current=mealValue(currentWeek,dayObj,type);
+  host.innerHTML="";
+  allMealOptions(type).forEach(opt=>{
+    const b=document.createElement("button"); b.className="choice"+(opt===current?" active":""); b.textContent=opt;
+    b.onclick=()=>{
+      swaps[mealKey(currentWeek,dayObj.day,type)] = opt;
+      save(LS.swaps,swaps); modal.classList.remove("open"); renderWeek(); renderToday(); toast("Maaltijd aangepast");
+    };
+    host.appendChild(b);
+  });
+  modal.classList.add("open"); modal.setAttribute("aria-hidden","false");
+}
+document.getElementById("closeSwap").onclick=()=>document.getElementById("swapModal").classList.remove("open");
+document.getElementById("swapModal").onclick=e=>{if(e.target.id==="swapModal")e.currentTarget.classList.remove("open")};
+
+function recipeTypeKey(type){
+  return {"Ontbijt":"breakfast","Lunch":"lunch","Tussendoor":"snack","Avondeten":"dinner"}[type] || "dinner";
+}
+
+function renderToday(){
+  const d=currentDayData(), key=isoDate();
+  document.getElementById("dateBadge").textContent = new Intl.DateTimeFormat("nl-NL",{weekday:"long",day:"numeric",month:"long"}).format(new Date());
+  document.getElementById("todayTitle").textContent = d.activity;
+  document.getElementById("todayActivity").innerHTML = `<b>${esc(d.activityDetail)}</b><div class="small muted">Week ${currentWeek} • ${d.day}</div>`;
+  const tasks=[
+    ["activity",d.activity+" — "+d.activityDetail],
+    ["breakfast","Ontbijt — "+mealValue(currentWeek,d,"breakfast")],
+    ["lunch","Lunch — "+mealValue(currentWeek,d,"lunch")],
+    ["snack","Tussendoor — "+mealValue(currentWeek,d,"snack")],
+    ["dinner","Avondeten — "+mealValue(currentWeek,d,"dinner")],
+    ["water","Genoeg gedronken"]
+  ];
+  const c=document.getElementById("todayChecklist"); c.innerHTML="";
+  tasks.forEach(([id,label])=>{
+    const k=key+"_"+id, on=!!checks[k];
+    const row=document.createElement("label"); row.className="checkrow"+(on?" done":"");
+    row.innerHTML=`<input type="checkbox" ${on?"checked":""}><div class="label">${esc(label)}</div>`;
+    row.querySelector("input").addEventListener("change",e=>{checks[k]=e.target.checked;save(LS.checks,checks);row.classList.toggle("done",e.target.checked);});
+    c.appendChild(row);
+  });
+  const ta=document.getElementById("dailyNote"); ta.value=notes[key]||"";
+  ta.oninput=()=>{notes[key]=ta.value;save(LS.notes,notes)};
+}
+
+
+function openDaySwap(sourceDay){
+  const modal=document.getElementById("swapModal"), host=document.getElementById("swapChoices");
+  document.getElementById("swapTitle").textContent=`Avondeten van ${sourceDay.day} wisselen met...`;
+  host.innerHTML="";
+  DATA.weeks[currentWeek-1].filter(d=>d.day!==sourceDay.day).forEach(target=>{
+    const b=document.createElement("button"); b.className="choice";
+    b.innerHTML=`<b>${esc(target.day)}</b><br><span class="small muted">${esc(mealValue(currentWeek,target,"dinner"))}</span>`;
+    b.onclick=()=>{
+      const a=mealValue(currentWeek,sourceDay,"dinner"), c=mealValue(currentWeek,target,"dinner");
+      swaps[mealKey(currentWeek,sourceDay.day,"dinner")]=c;
+      swaps[mealKey(currentWeek,target.day,"dinner")]=a;
+      save(LS.swaps,swaps);
+      modal.classList.remove("open"); renderWeek(); renderToday(); if(shopMode==="chosen")renderShopping(); toast("Avondeten verwisseld");
+    };
+    host.appendChild(b);
+  });
+  modal.classList.add("open");
+}
+
+function renderWeek(){
+  const pills=document.getElementById("weekPills"); pills.innerHTML="";
+  [1,2,3,4].forEach(w=>{const b=document.createElement("button");b.textContent="Week "+w;b.className=w===currentWeek?"active":"";b.onclick=()=>{currentWeek=w;save(LS.week,w);renderWeek();renderToday();if(shopMode==='chosen')renderShopping()};pills.appendChild(b)});
+  const host=document.getElementById("weekContent"); host.innerHTML="";
+  DATA.weeks[currentWeek-1].forEach(d=>{
+    const el=document.createElement("div");el.className="day-card";
+    el.innerHTML=`<div class="day-head"><div><b>${d.day}</b><div class="small muted">${esc(d.activity)} • ${esc(d.activityDetail)}</div></div><span class="badge">Week ${currentWeek}</span></div>
+    <div class="meals">
+      <div class="meal"><div class="meal-title">Ontbijt</div><div>${esc(mealValue(currentWeek,d,"breakfast"))}</div><div class="swaprow"><button class="btn secondary tiny" data-swap="breakfast">Omwisselen</button></div></div>
+      <div class="meal"><div class="meal-title">Lunch</div><div>${esc(mealValue(currentWeek,d,"lunch"))}</div><div class="swaprow"><button class="btn secondary tiny" data-swap="lunch">Omwisselen</button></div></div>
+      <div class="meal"><div class="meal-title">Tussendoor</div><div>${esc(mealValue(currentWeek,d,"snack"))}</div><div class="swaprow"><button class="btn secondary tiny" data-swap="snack">Omwisselen</button></div></div>
+      <div class="meal"><div class="meal-title">Avondeten</div><div>${esc(mealValue(currentWeek,d,"dinner"))}</div><div class="swaprow"><button class="btn secondary tiny" data-swap="dinner">Kies ander gerecht</button><button class="btn secondary tiny" data-swapday="dinner">Wissel met dag</button></div></div>
+    </div>`;
+    const labels={breakfast:"Ontbijt",lunch:"Lunch",snack:"Tussendoor",dinner:"Avondeten"};
+    el.querySelectorAll("[data-swap]").forEach(b=>b.onclick=()=>openSwap(d,b.dataset.swap,labels[b.dataset.swap]));
+    el.querySelectorAll("[data-swapday]").forEach(b=>b.onclick=()=>openDaySwap(d));
+    host.appendChild(el);
+  });
+}
+
+
+const TRAININGS={
+  A:{
+    title:"Calisthenics A",meta:"25–30 min • thuis • 2 rondes (week 3–4: 3 rondes)",
+    exercises:[
+      ["Stoel-squat","8–12 herhalingen"],
+      ["Wall / incline push-up","8–12 herhalingen"],
+      ["Glute bridge","10–15 herhalingen"],
+      ["Reverse lunge","8–10 per been"],
+      ["Dead bug of plank","20–30 seconden"]
+    ]
+  },
+  B:{
+    title:"Calisthenics B",meta:"25–30 min • thuis • 2 rondes (week 3–4: 3 rondes)",
+    exercises:[
+      ["Sit-to-stand","10–15 herhalingen"],
+      ["Incline push-up","8–12 herhalingen"],
+      ["Hip hinge","10–15 herhalingen"],
+      ["Bird dog","8–12 per kant"],
+      ["Calf raise","10–15 herhalingen"],
+      ["Wall sit","20–30 seconden"]
+    ]
+  },
+  Pilates:{
+    title:"Reformer Pilates",meta:"Woensdagavond • 50 min",
+    exercises:[
+      ["Les gedaan","50 minuten"],
+      ["Rustig opgewarmd","ja"],
+      ["Na afloop voldoende gedronken","ja"]
+    ]
+  }
+};
+function trainingKey(){return isoDate()+"|"+activeTraining}
+function renderTraining(){
+  document.querySelectorAll("#trainingTabs button").forEach(b=>b.classList.toggle("active",b.dataset.train===activeTraining));
+  const t=TRAININGS[activeTraining], key=trainingKey(), state=trainingState[key]||{};
+  const host=document.getElementById("trainingContent");
+  host.innerHTML=`<div class="card hero"><h3>${t.title}</h3><div class="small muted">${t.meta}</div></div><div class="card"><div id="exerciseList"></div>
+  ${activeTraining!=="Pilates"?`<div class="timerbox"><div><div class="small muted">Rusttimer</div><div class="timer-display" id="timerDisplay">01:00</div></div><div class="flex"><button class="btn secondary tiny" id="timerReset">Reset</button><button class="btn tiny" id="timerStart">Start</button></div></div>`:""}</div>`;
+  const list=host.querySelector("#exerciseList");
+  t.exercises.forEach((ex,i)=>{
+    const done=!!state[i];
+    const row=document.createElement("label");row.className="exercise"+(done?" done":"");
+    row.innerHTML=`<div class="num">${i+1}</div><div><div class="exercise-name"><b>${esc(ex[0])}</b></div><div class="small muted">${esc(ex[1])}</div></div><input type="checkbox" ${done?"checked":""}>`;
+    row.querySelector("input").onchange=e=>{
+      const s=trainingState[key]||{};s[i]=e.target.checked;trainingState[key]=s;save(LS.training,trainingState);row.classList.toggle("done",e.target.checked)
+    };
+    list.appendChild(row);
+  });
+  if(activeTraining!=="Pilates") setupTimer();
+}
+document.querySelectorAll("#trainingTabs button").forEach(b=>b.onclick=()=>{activeTraining=b.dataset.train;renderTraining()});
+function setupTimer(){
+  clearInterval(timerInterval); timerRemaining=60;
+  const d=document.getElementById("timerDisplay"), start=document.getElementById("timerStart"), reset=document.getElementById("timerReset");
+  const paint=()=>{const m=Math.floor(timerRemaining/60),s=timerRemaining%60;d.textContent=String(m).padStart(2,"0")+":"+String(s).padStart(2,"0")};
+  paint();
+  start.onclick=()=>{
+    if(timerInterval){clearInterval(timerInterval);timerInterval=null;start.textContent="Start";return}
+    start.textContent="Pauze";
+    timerInterval=setInterval(()=>{timerRemaining--;paint();if(timerRemaining<=0){clearInterval(timerInterval);timerInterval=null;start.textContent="Opnieuw";if(navigator.vibrate)navigator.vibrate([200,100,200]);toast("Rusttijd klaar")}},1000);
+  };
+  reset.onclick=()=>{clearInterval(timerInterval);timerInterval=null;timerRemaining=60;paint();start.textContent="Start"};
+}
+
+function renderRecipes(){
+  const host=document.getElementById("recipeList");host.innerHTML="";
+  DATA.recipes.forEach(r=>{
+    const el=document.createElement("div");el.className="card";
+    const p=portions[r.id]||1;
+    el.innerHTML=`<div class="recipe-card"><div class="recipe-art">${SVG[r.emoji]||""}</div><div><h3>${esc(r.title)}</h3><div class="small muted">⏱ ${esc(r.time)}</div>
+      <div class="portion-control" style="margin-top:8px"><button data-minus>−</button><span class="portion-count">${p}</span><button data-plus>+</button><span class="small muted">portie${p===1?"":"s"}</span></div>
+      <p><button class="btn secondary showrecipe">Bekijk recept</button></p></div></div>
+    <div class="recipe-detail"><div class="grid2"><div><b>Ingrediënten</b><ul class="ingredient-list"></ul></div><div><b>Bereiding</b><ol>${r.steps.map(x=>`<li>${esc(x)}</li>`).join("")}</ol></div></div><div class="badge">Tip: ${esc(r.tip)}</div></div>`;
+    const scaleLine=(line,n)=>{
+      return line.replace(/(^|\s)(\d+(?:[.,]\d+)?)(\s*)(g|ml|el|tl|stuks?|eieren?|ei|wraps?)/i,(m,pre,num,sp,unit)=>{
+        const v=parseFloat(num.replace(",", "."))*n; const shown=Number.isInteger(v)?v:String(Math.round(v*10)/10).replace(".",",");
+        return pre+shown+sp+unit;
+      });
+    };
+    const drawIngredients=()=>{
+      const n=portions[r.id]||1;
+      el.querySelector(".portion-count").textContent=n;
+      el.querySelector(".ingredient-list").innerHTML=r.ingredients.map(x=>`<li>${esc(scaleLine(x,n))}</li>`).join("");
+    };
+    drawIngredients();
+    el.querySelector("[data-minus]").onclick=()=>{portions[r.id]=Math.max(1,(portions[r.id]||1)-1);save(LS.portions,portions);drawIngredients()};
+    el.querySelector("[data-plus]").onclick=()=>{portions[r.id]=Math.min(6,(portions[r.id]||1)+1);save(LS.portions,portions);drawIngredients()};
+    const btn=el.querySelector(".showrecipe"), detail=el.querySelector(".recipe-detail");
+    btn.onclick=()=>{detail.classList.toggle("open");btn.textContent=detail.classList.contains("open")?"Sluit recept":"Bekijk recept"};
+    host.appendChild(el);
+  });
+  customRecipes.forEach(r=>{
+    const el=document.createElement("div");el.className="card custom-recipe";
+    el.innerHTML=`<div class="recipe-card"><div>${SVG["🥘"]||""}</div><div><h3>${esc(r.title)}</h3><div class="small muted">Eigen recept • ${esc(r.type)}</div><p><button class="btn secondary show">Bekijk recept</button> <button class="btn secondary delete">Verwijder</button></p></div></div>
+    <div class="recipe-detail"><div class="grid2"><div><b>Ingrediënten</b><ul>${r.ingredients.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div><div><b>Bereiding</b><ol>${r.steps.map(x=>`<li>${esc(x)}</li>`).join("")}</ol></div></div></div>`;
+    const detail=el.querySelector(".recipe-detail"),show=el.querySelector(".show");
+    show.onclick=()=>{detail.classList.toggle("open");show.textContent=detail.classList.contains("open")?"Sluit recept":"Bekijk recept"};
+    el.querySelector(".delete").onclick=()=>{customRecipes=customRecipes.filter(x=>x.id!==r.id);save(LS.customRecipes,customRecipes);renderRecipes();renderWeek();toast("Recept verwijderd")};
+    host.appendChild(el);
+  });
+}
+
+document.getElementById("addCustomRecipe").onclick=()=>{
+  const title=document.getElementById("customRecipeTitle").value.trim();
+  const type=document.getElementById("customRecipeType").value;
+  const ingredients=document.getElementById("customRecipeIngredients").value.split("\n").map(x=>x.trim()).filter(Boolean);
+  const steps=document.getElementById("customRecipeSteps").value.split("\n").map(x=>x.trim()).filter(Boolean);
+  if(!title || !ingredients.length || !steps.length) return toast("Vul naam, ingrediënten en stappen in");
+  const r={id:"custom_"+Date.now(),title,type,typeKey:recipeTypeKey(type),ingredients,steps,summary:title};
+  customRecipes.push(r);save(LS.customRecipes,customRecipes);
+  ["customRecipeTitle","customRecipeIngredients","customRecipeSteps"].forEach(id=>document.getElementById(id).value="");
+  renderRecipes();renderWeek();toast("Eigen recept opgeslagen");
+};
+
+function buildChosenShopping(){
+  const texts=[];
+  DATA.weeks[currentWeek-1].forEach(d=>["breakfast","lunch","snack","dinner"].forEach(t=>texts.push(mealValue(currentWeek,d,t))));
+  const joined=texts.join(" | ").toLowerCase();
+  const defs=[
+    ["Zuivel",[["Magere kwark","kwark"],["Halfvolle melk","melk"],["Hüttenkäse","hüttenkäse"]]],
+    ["Eiwit",[["Eieren","ei"],["Kip","kip"],["Mager gehakt","gehakt"],["Kidneybonen / bonen","bonen"]]],
+    ["Basis",[["Havermout","havermout"],["Volkorenbrood","boterham"],["Rijst","rijst"],["Volkoren pasta","pasta"],["Aardappelen","aardappel"],["Volkoren wraps","wrap"]]],
+    ["Groente",[["Diepvries-/wokgroente","groente"],["Uien","ui"],["Paprika","paprika"],["Komkommer","komkommer"],["Wortels","wortel"],["Sla","sla"],["Mais","mais"],["Passata","passata"]]],
+    ["Fruit",[["Appels / peren / seizoensfruit","appel"],["Peren","peer"],["Bananen (om te verwerken)","banaan"],["Overig fruit","fruit"]]],
+    ["Voorraad",[["Ongezouten pinda's","pinda"],["Sojasaus","sojasaus"],["Kaneel","kaneel"],["Paprikapoeder","paprikapoeder"],["Komijn","komijn"],["Italiaanse kruiden","italiaanse"],["Olie","olie"],["Knoflook","knoflook"]]]
+  ];
+  return defs.map(([cat,items])=>[cat,items.filter(([label,needle])=>joined.includes(needle)).map(([label])=>label)]).filter(x=>x[1].length);
+}
+function renderShopping(){
+  const host=document.getElementById("shoppingList");host.innerHTML="";
+  const source=shopMode==="chosen" ? buildChosenShopping() : DATA.shopping;
+  source.forEach(([cat,items])=>{
+    const box=document.createElement("div");box.className="card shop-group";box.innerHTML=`<h3>${esc(cat)}</h3>`;
+    items.forEach(item=>{
+      const k=shopMode+"|"+currentWeek+"|"+cat+"|"+item, on=!!shop[k];
+      const lab=document.createElement("label");lab.className="shopitem"+(on?" done":"");lab.innerHTML=`<input type="checkbox" ${on?"checked":""}><span class="label">${esc(item)}</span>`;
+      lab.querySelector("input").onchange=e=>{shop[k]=e.target.checked;save(LS.shop,shop);lab.classList.toggle("done",e.target.checked)};
+      box.appendChild(lab);
+    });
+    host.appendChild(box);
+  });
+  if(!source.length) host.innerHTML='<div class="card empty">Nog geen boodschappen gevonden.</div>';
+  document.getElementById("shopDefaultBtn").classList.toggle("active",shopMode==="default");
+  document.getElementById("shopChosenBtn").classList.toggle("active",shopMode==="chosen");
+}
+document.getElementById("shopDefaultBtn").onclick=()=>{shopMode="default";save(LS.shopMode,shopMode);renderShopping()};
+document.getElementById("shopChosenBtn").onclick=()=>{shopMode="chosen";save(LS.shopMode,shopMode);renderShopping()};
+document.getElementById("resetShop").onclick=()=>{shop={};save(LS.shop,shop);renderShopping();toast("Boodschappenlijst gereset")};
+
+function renderProgress(){
+  const list=document.getElementById("progressList");
+  const weights=progress.filter(p=>p.weight).map(p=>+p.weight);
+  const first=weights.length?weights[0]:null, latest=weights.length?weights[weights.length-1]:null;
+  const change=(first!=null&&latest!=null)?latest-first:null;
+  document.getElementById("progressKpis").innerHTML=`
+    <div class="kpi"><span class="small muted">Laatste</span><b>${latest!=null?latest.toFixed(1)+" kg":"—"}</b></div>
+    <div class="kpi"><span class="small muted">Verschil</span><b>${change!=null?(change>0?"+":"")+change.toFixed(1)+" kg":"—"}</b></div>
+    <div class="kpi"><span class="small muted">Metingen</span><b>${weights.length}</b></div>`;
+  const g=document.getElementById("goalWeight");g.value=goalWeight||"";
+  g.onchange=()=>{goalWeight=g.value;save(LS.goal,goalWeight);renderProgress()};
+  const fill=document.getElementById("goalBarFill"),gt=document.getElementById("goalText");
+  if(first!=null && latest!=null && goalWeight){
+    const goal=+goalWeight, total=first-goal, done=first-latest;
+    const pct=total>0?Math.max(0,Math.min(100,done/total*100)):0;
+    fill.style.width=pct+"%";
+    gt.textContent=`${Math.round(pct)}% van het traject naar ${goal.toFixed(1)} kg`;
+  }else{fill.style.width="0%";gt.textContent="Vul een doelgewicht en minimaal één meting in om voortgang te zien."}
+  if(!progress.length) list.innerHTML='<span class="muted">Nog geen metingen opgeslagen.</span>';
+  else list.innerHTML=[...progress].reverse().map(p=>`<div class="checkrow"><div><b>${esc(p.date)}</b><div>${p.weight?esc(p.weight)+" kg":""} ${p.waist?"• "+esc(p.waist)+" cm taille":""}</div></div></div>`).join("");
+  drawChart();
+}
+document.getElementById("saveProgress").onclick=()=>{
+  const w=document.getElementById("weightInput").value, waist=document.getElementById("waistInput").value;
+  if(!w && !waist) return toast("Vul eerst een meting in");
+  progress.push({date:new Intl.DateTimeFormat("nl-NL",{day:"2-digit",month:"2-digit",year:"numeric"}).format(new Date()), weight:w, waist});
+  save(LS.progress,progress);document.getElementById("weightInput").value="";document.getElementById("waistInput").value="";renderProgress();toast();
+};
+
+function drawChart(){
+ const c=document.getElementById("chart"),ctx=c.getContext("2d");const W=c.width,H=c.height;
+ ctx.clearRect(0,0,W,H);ctx.fillStyle="#fff";ctx.fillRect(0,0,W,H);
+ const pts=progress.filter(p=>p.weight).slice(-12).map(p=>({...p,weight:+p.weight}));
+ ctx.strokeStyle="#e2e3de";ctx.lineWidth=1;for(let i=1;i<5;i++){let y=30+i*(H-60)/5;ctx.beginPath();ctx.moveTo(45,y);ctx.lineTo(W-20,y);ctx.stroke()}
+ if(pts.length<2){ctx.fillStyle="#6e786e";ctx.font="20px system-ui";ctx.fillText("Na 2 metingen verschijnt hier je gewichtstrend.",50,H/2);return}
+ const vals=pts.map(p=>p.weight), min=Math.min(...vals)-1,max=Math.max(...vals)+1;
+ const x=i=>45+i*(W-75)/(pts.length-1), y=v=>H-30-(v-min)*(H-60)/(max-min||1);
+ ctx.strokeStyle="#6f8f75";ctx.lineWidth=5;ctx.lineCap="round";ctx.lineJoin="round";ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(x(i),y(p.weight)):ctx.moveTo(x(i),y(p.weight)));ctx.stroke();
+ ctx.fillStyle="#6f8f75";pts.forEach((p,i)=>{ctx.beginPath();ctx.arc(x(i),y(p.weight),6,0,Math.PI*2);ctx.fill()});
+ ctx.fillStyle="#293229";ctx.font="16px system-ui";ctx.fillText(max.toFixed(1)+" kg",6,35);ctx.fillText(min.toFixed(1)+" kg",6,H-24);
+}
+
+
+document.getElementById("todayFoodBtn").onclick=()=>{
+  const d=currentDayData();
+  const meals=[
+    ["Ontbijt",mealValue(currentWeek,d,"breakfast")],
+    ["Lunch",mealValue(currentWeek,d,"lunch")],
+    ["Tussendoor",mealValue(currentWeek,d,"snack")],
+    ["Avondeten",mealValue(currentWeek,d,"dinner")]
+  ];
+  const box=document.getElementById("todayFoodSuggestion");
+  box.style.display="block";
+  box.innerHTML=meals.map(([k,v])=>`<b>${k}:</b> ${esc(v)}`).join("<br>");
+};
+
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
+ 
+document.getElementById("todayFoodBtn").onclick=()=>{
+  const d=currentDayData();
+  const meals=[
+    ["Ontbijt",mealValue(currentWeek,d,"breakfast")],
+    ["Lunch",mealValue(currentWeek,d,"lunch")],
+    ["Tussendoor",mealValue(currentWeek,d,"snack")],
+    ["Avondeten",mealValue(currentWeek,d,"dinner")]
+  ];
+  const box=document.getElementById("todayFoodSuggestion");
+  box.style.display="block";
+  box.innerHTML=meals.map(([k,v])=>`<b>${k}:</b> ${esc(v)}`).join("<br>");
+};
+
+document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("active",x===b));
+ document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id===b.dataset.view));
+ window.scrollTo({top:0,behavior:"smooth"});
+});
+renderToday();renderWeek();renderTraining();renderRecipes();renderShopping();renderProgress();
+if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+</body>
+</html>

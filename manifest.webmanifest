@@ -1,0 +1,16 @@
+{
+  "name": "Mijn 4-weken plan – versie 3",
+  "short_name": "Mijn Plan",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f7f6f1",
+  "theme_color": "#6f8f75",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
