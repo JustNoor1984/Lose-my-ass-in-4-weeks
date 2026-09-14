@@ -446,8 +446,7 @@ function targetCalories(){
 }
 function absolutePlanDay(date){
  if(!plan.start_date)return null;
- const d=diff(plan.start_date,date);
- return d>=0?d:null;
+ return diff(plan.start_date,date);
 }
 function dayIndexForDate(date){
  const d=absolutePlanDay(date);
@@ -753,11 +752,35 @@ async function saveHomeMeal(date,slot,recipeId){
  renderToday();renderWeek();renderShopping();
  toast(`${SLOT_NAMES[slot]} gekozen — andere opties opnieuw berekend`);
 }
+
+function plannedSportForDate(date){
+ const day=new Date(date+"T12:00:00").getDay();
+ const planByDay={
+   0:{name:"Rustdag / rustige wandeling",duration:"20–40 min optioneel",note:"Herstel staat vandaag voorop."},
+   1:{name:"Calisthenics A",duration:"30–40 min",note:"Krachttraining: full body, rustig opbouwen."},
+   2:{name:"Wandeling of Tai Chi",duration:"30–45 min",note:"Lichte actieve hersteldag."},
+   3:{name:"Reformer Pilates",duration:"50 min",note:"Je vaste Pilates-avond."},
+   4:{name:"Wandeling of Tai Chi",duration:"30–45 min",note:"Lichte beweging en herstel."},
+   5:{name:"Calisthenics B",duration:"30–40 min",note:"Tweede krachttraining van de week."},
+   6:{name:"Wandeling of Tai Chi",duration:"30–60 min",note:"Rustig bewegen; tempo naar gevoel."}
+ };
+ return planByDay[day];
+}
+function plannedSportHtml(date){
+ const p=plannedSportForDate(date);
+ const done=sports.filter(s=>s.activity_date===date);
+ return `<div class="card" style="margin-top:8px">
+   <div class="small muted">Vandaag gepland</div>
+   <b>🏃 ${esc(p.name)}</b>
+   <div class="small">${esc(p.duration)} • ${esc(p.note)}</div>
+   ${done.length?`<div class="small" style="margin-top:7px;color:#087b54"><b>Opgeslagen activiteit:</b> ${done.map(s=>`${esc(s.activity)}${s.duration_minutes?` • ${s.duration_minutes} min`:""}`).join(", ")}</div>`:""}
+ </div>`;
+}
 function renderToday(){
  const t=targetCalories();$("calorieBadge").textContent=t?`Doel ± ${t} kcal`:"Profiel aanvullen";
  if(!plan.start_date){$("planBadge").textContent="Startdatum instellen";$("todayMeals").innerHTML="";$("todayTotal").innerHTML="";return}
  let di=dayIndexForDate(iso()), ad=absolutePlanDay(iso());
- $("planBadge").textContent=di==null?"Planning start nog niet":`Week ${Math.floor(di/7)+1} • Dag ${di+1}${ad>=28?" • doorlopende planning":""}`;
+ $("planBadge").textContent=di==null?"Startdatum instellen":`Week ${Math.floor(di/7)+1} • Dag ${di+1} • doorlopende planning`;
 
  const date=iso(), slots=["breakfast","lunch","snack","dinner"];
  $("todayMeals").className="home-meal-builder";
@@ -811,7 +834,7 @@ function renderToday(){
  $("todayCalorieSummary").innerHTML=t?`<b>🔥 ± ${t} kcal per dag</b><br><span class="small">Geschatte persoonlijke richtlijn</span>`:"Vul je profiel in om je dagdoel te berekenen.";
  $("remainingRingWrap").innerHTML=t?`<div class="flex"><div class="calorie-ring" style="--pct:${actualPct}%"><span>${eaten}</span></div><div><b>${eaten} / ${t} kcal</b><br><span style="color:#008f5c;font-weight:800">Nog ±${remainingActual} kcal over</span></div></div>`:"";
  renderActual();renderMix();renderGroceryPreview();
- const ts=sports.filter(s=>s.activity_date===iso());$("todaySports").innerHTML=ts.length?ts.map(s=>`<div class="tiny muted">${esc(s.activity)} ${s.duration_minutes?"• "+s.duration_minutes+" min":""}</div>`).join(""):"";
+ $("todaySports").innerHTML=plannedSportHtml(iso());
 }
 function renderActual(){
  const rows=foodLog.filter(x=>x.eaten_on===iso());$("actualToday").innerHTML=rows.length?`<b>Werkelijk toegevoegd vandaag</b>`+rows.map(x=>`<div class="actual-box between"><span>${esc(x.name)}<br><small>${esc(x.quantity_text||"")}</small></span><b>${Math.round(+x.calories)} kcal</b></div>`).join(""):`<div class="actual-box"><b>Nog niets afwijkends ingevoerd.</b><div class="small muted">Je geplande menu blijft actief.</div></div>`
@@ -859,7 +882,8 @@ function renderWeek(){
  for(let d=0;d<7;d++){
    const date=addDays(cycleStart,(weekView-1)*7+d), total=dayTotal(date);
    let box=document.createElement("div");box.className="card";
-   box.innerHTML=`<div class="between"><div><h3>${nl(date)}</h3><div class="small muted">Doorlopende planning • week ${weekView}</div></div><div class="day-total ${t&&total>t?"over":"under"}">± ${total}${t?` / ${t}`:""} kcal</div></div><div class="mealgrid"></div>`;
+   const sportPlan=plannedSportForDate(date);
+   box.innerHTML=`<div class="between"><div><h3>${nl(date)}</h3><div class="small muted">Doorlopende planning • week ${weekView}</div><div class="small" style="margin-top:4px">🏃 <b>${esc(sportPlan.name)}</b> • ${esc(sportPlan.duration)}</div></div><div class="day-total ${t&&total>t?"over":"under"}">± ${total}${t?` / ${t}`:""} kcal</div></div><div class="mealgrid"></div>`;
    let grid=box.querySelector(".mealgrid");
    for(const slot of ["breakfast","lunch","snack","dinner"]){
      let r=selectedRecipe(date,slot),m=document.createElement("div");m.className="meal";
