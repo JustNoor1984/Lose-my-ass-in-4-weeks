@@ -97,6 +97,18 @@ nav{display:none!important}
 .technique-cue{margin-top:6px;padding:7px 9px;background:#f5f8fb;border-radius:8px;font-size:.82rem}
 @media(max-width:900px){.recipe-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:600px){.recipe-grid{grid-template-columns:1fr}}
+
+/* V7.3 recipe interaction fixes */
+.recipe-tile{position:relative}
+.recipe-tile-main{cursor:pointer}
+.recipe-tile-main:focus{outline:3px solid #bcebd7;outline-offset:-3px}
+.recipe-photo-wrap{position:relative}
+.recipe-photo-add{position:absolute;right:8px;bottom:8px;border:0;border-radius:999px;background:#fff;color:#087b54;padding:7px 10px;font-weight:800;box-shadow:0 2px 8px rgba(0,0,0,.14);cursor:pointer}
+.recipe-placeholder{position:relative;cursor:pointer}
+.recipe-placeholder .photo-hint{font-size:.82rem;font-weight:800;color:#087b54;margin-top:5px}
+.recipe-detail-photo{width:100%;max-height:330px;object-fit:cover;border-radius:12px}
+.recipe-detail-section{margin-top:16px}
+.recipe-detail-section li{margin:7px 0;line-height:1.45}
 </style></head><body>
 
 <div id="authGate"><div class="wrap">
@@ -206,6 +218,16 @@ nav{display:none!important}
 <div class="grid2"><label>Hoeveelheid<input id="differentQty" placeholder="Bijv. 1 broodje / 350 g"></label><label>Calorieën<input id="differentKcal" type="number" min="0" placeholder="350"></label></div>
 <div class="flex"><button class="btn" id="saveDifferent">Toevoegen aan vandaag</button><label style="margin:0"><input id="alsoSaveMeal" type="checkbox" style="width:auto"> Bewaar ook als eigen maaltijd</label></div></div></div>
 
+
+<div class="modal" id="recipeDetailModal">
+  <div class="modalbox">
+    <div class="modalhead between">
+      <h2 id="recipeDetailTitle">Recept</h2>
+      <button class="btn secondary sm" onclick="closeModal('recipeDetailModal')">Sluiten</button>
+    </div>
+    <div id="recipeDetailBody"></div>
+  </div>
+</div>
 <div class="modal" id="scheduleRecipeModal"><div class="modalbox">
   <div class="modalhead between"><h2>Recept inplannen</h2><button class="btn secondary sm" onclick="closeModal('scheduleRecipeModal')">Sluiten</button></div>
   <input type="hidden" id="scheduleRecipeRef">
@@ -398,20 +420,82 @@ function setRecipeTab(tab){
 }
 async function recipeTile(r,source){
  const img = r.image_path ? await signedRecipeImage(r.image_path) : (source==="builtin"?mealImage(r,r.slot):null);
+ const canPhoto = !!(r.custom && !r.community);
  const el=document.createElement("div"); el.className="recipe-tile";
- el.innerHTML=`${img?`<img class="recipe-tile-img" src="${img}" alt="${esc(r.name)}">`:`<div class="recipe-placeholder">🍲</div>`}
- <div class="recipe-tile-body"><b>${esc(r.name)}</b><div class="small muted">${SLOT_NAMES[r.slot]||r.slot}${r.kcal?` • ±${r.kcal} kcal`:""}</div>
- <div class="recipe-actions"><button class="btn secondary sm view">Bekijk</button><button class="btn sm plan">＋ Weekmenu</button>${r.custom&&!r.community?`<button class="btn secondary sm photo">${r.image_path?"Foto wijzigen":"Foto toevoegen"}</button>`:""}</div></div>`;
- el.querySelector(".view").onclick=()=>showRecipe(r,{source});
+ el.innerHTML=`
+ <div class="recipe-tile-main" role="button" tabindex="0" aria-label="Bekijk recept ${esc(r.name)}">
+   <div class="recipe-photo-wrap">
+     ${img?`<img class="recipe-tile-img" src="${img}" alt="${esc(r.name)}">`
+          :`<div class="recipe-placeholder"><div>📷<div class="photo-hint">${canPhoto?"Foto toevoegen":"Geen foto"}</div></div></div>`}
+     ${canPhoto?`<button type="button" class="recipe-photo-add">${r.image_path?"📷 Wijzig foto":"＋ Foto"}</button>`:""}
+   </div>
+   <div class="recipe-tile-body">
+     <b>${esc(r.name)}</b>
+     <div class="small muted">${SLOT_NAMES[r.slot]||r.slot}${r.kcal?` • ±${r.kcal} kcal`:""}</div>
+     <div class="small" style="margin-top:5px;color:#087b54;font-weight:800">Bekijk volledig recept →</div>
+   </div>
+ </div>
+ <div class="recipe-actions" style="padding:0 11px 11px">
+   <button type="button" class="btn secondary sm view">Bekijk recept</button>
+   <button type="button" class="btn sm plan">＋ Weekmenu</button>
+ </div>`;
+ const open=()=>openRecipeDetail(r,source);
+ el.querySelector(".recipe-tile-main").onclick=(e)=>{
+   if(e.target.closest(".recipe-photo-add")) return;
+   open();
+ };
+ el.querySelector(".recipe-tile-main").onkeydown=(e)=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();open()}};
+ el.querySelector(".view").onclick=open;
  el.querySelector(".plan").onclick=()=>openScheduleRecipe(r,source);
- if(r.custom&&!r.community)el.querySelector(".photo").onclick=()=>openPhotoUpload(r.dbid);
+ if(canPhoto){
+   el.querySelector(".recipe-photo-add").onclick=(e)=>{e.stopPropagation();openPhotoUpload(r.dbid)};
+ }
  return el;
+}
+async function openRecipeDetail(r,source="mine"){
+ $("recipeDetailTitle").textContent=r.name;
+ const img = r.image_path ? await signedRecipeImage(r.image_path) : (source==="builtin"?mealImage(r,r.slot):null);
+ const canPhoto=!!(r.custom&&!r.community);
+ $("recipeDetailBody").innerHTML=`
+   ${img?`<img class="recipe-detail-photo" src="${img}" alt="${esc(r.name)}">`
+        :`<button type="button" id="detailAddPhoto" class="recipe-placeholder" style="border:0;width:100%"><div>📷<div class="photo-hint">${canPhoto?"Klik om een foto van dit gerecht toe te voegen":"Geen foto beschikbaar"}</div></div></button>`}
+   <div class="nutrition" style="margin-top:10px">
+     <div><span class="small muted">Energie</span><b>${r.kcal?`± ${r.kcal} kcal`:"Onbekend"}</b></div>
+     <div><span class="small muted">Maaltijd</span><b>${SLOT_NAMES[r.slot]||esc(r.slot)}</b></div>
+     <div><span class="small muted">Portie</span><b>${r.servings||1}</b></div>
+   </div>
+   <div class="recipe-detail-section"><h3>Benodigdheden / ingrediënten</h3>
+     <ul>${recipeIngredientLines(r)||"<li>Geen ingrediënten ingevoerd.</li>"}</ul>
+   </div>
+   <div class="recipe-detail-section"><h3>Bereidingswijze</h3>
+     <ol>${(r.steps||[]).map(x=>`<li>${esc(x)}</li>`).join("")||"<li>Geen bereidingsstappen ingevoerd.</li>"}</ol>
+   </div>
+   <div class="recipe-actions">
+     <button type="button" class="btn" id="detailPlanRecipe">＋ Toevoegen aan weekmenu</button>
+     ${canPhoto&&img?`<button type="button" class="btn secondary" id="detailChangePhoto">📷 Foto wijzigen</button>`:""}${!r.custom?`<button type="button" class="btn secondary" id="detailCopyForPhoto">📷 Eigen foto toevoegen</button>`:""}
+   </div>`;
+ $("detailPlanRecipe").onclick=()=>openScheduleRecipe(r,source);
+ if(canPhoto&&!img)$("detailAddPhoto").onclick=()=>openPhotoUpload(r.dbid);
+ if(canPhoto&&img)$("detailChangePhoto").onclick=()=>openPhotoUpload(r.dbid);
+ if(!r.custom)$("detailCopyForPhoto").onclick=()=>copyBuiltinForPhoto(r);
+ openModal("recipeDetailModal");
 }
 async function renderCommunityRecipes(){
  const host=$("communityRecipeList"); host.innerHTML="";
  if(!communityRecipes.length){host.innerHTML='<div class="card muted">Nog geen gedeelde recepten.</div>';return}
  const grid=document.createElement("div");grid.className="recipe-grid";host.appendChild(grid);
  for(const r of communityRecipes)grid.appendChild(await recipeTile(r,"community"));
+}
+async function copyBuiltinForPhoto(r){
+ const ingredients=(r.ingredients||[]).map(x=>typeof x==="string"?{qty:"",unit:"",name:x,kcal:null,cat:""}:x);
+ const payload={user_id:user.id,name:r.name,meal_type:r.slot,ingredients,steps:r.steps||[],servings:r.servings||1,calories_total:(r.kcal||0)*(r.servings||1)};
+ const res=await sb.from("recipes").insert(payload).select().single();
+ if(res.error)return toast("Eigen receptkopie maken lukte niet");
+ ownRecipes.push(res.data);
+ closeModal("recipeDetailModal");
+ renderRecipes();
+ openPhotoUpload(res.data.id);
+ toast("Eigen kopie gemaakt — kies nu je foto");
 }
 function openPhotoUpload(recipeId){
  $("photoRecipeId").value=recipeId;$("recipePhotoFile").value="";openModal("photoRecipeModal");
@@ -426,7 +510,7 @@ async function uploadRecipePhoto(){
  const db=await sb.from("recipes").update({image_path:path}).eq("id",id).eq("user_id",user.id).select().single();
  if(db.error)return toast("Foto koppelen lukte niet");
  const idx=ownRecipes.findIndex(x=>x.id===id);if(idx>=0)ownRecipes[idx]=db.data;
- closeModal("photoRecipeModal");renderRecipes();toast("Foto toegevoegd");
+ closeModal("photoRecipeModal");closeModal("recipeDetailModal");renderRecipes();if(recipeTab==="community")renderCommunityRecipes();toast("Foto toegevoegd");
 }
 function openScheduleRecipe(r,source){
  if(!plan.start_date)return toast("Stel eerst je startdatum in bij Profiel");
