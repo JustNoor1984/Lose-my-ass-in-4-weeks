@@ -1,7 +1,8 @@
 {
-  "name": "Mijn 4-weken plan – versie 3",
+  "name": "Mijn 4-weken plan",
   "short_name": "Mijn Plan",
   "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#f7f6f1",
   "theme_color": "#6f8f75",
